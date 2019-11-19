@@ -76,6 +76,34 @@ AnalogInputRemapping DeviceManipulationHandle::getAnalogInputRemapping(uint32_t 
 bool DeviceManipulationHandle::handlePoseUpdate(uint32_t& unWhichDevice, vr::DriverPose_t& newPose, uint32_t unPoseStructSize) {
 	std::lock_guard<std::recursive_mutex> lock(_mutex);
 
+	auto serverDriver = ServerDriver::getInstance();
+	if (serverDriver) {
+		YawVRUnityTesterUdpClient& yawVRUnityTesterUdpClient = serverDriver->yawVRUnityTesterUdpServer();
+		YawVRUnityTesterPacket_t* yawVRUnityTesterPacket = yawVRUnityTesterUdpClient.lockPacket();
+		vr::HmdQuaternion_t tmpConj = vrmath::quaternionConjugate(newPose.qWorldFromDriverRotation);
+		auto newPoseWorldPos = vrmath::quaternionRotateVector(newPose.qWorldFromDriverRotation, tmpConj, newPose.vecPosition, true) - newPose.vecWorldFromDriverTranslation;
+		auto newPoseWorldRot = tmpConj * newPose.qRotation;
+		if (m_eDeviceClass == vr::ETrackedDeviceClass::TrackedDeviceClass_HMD) {
+			yawVRUnityTesterPacket->hmdPos = newPoseWorldPos;
+			yawVRUnityTesterPacket->hmdRot = newPoseWorldRot;
+		}
+		else if (m_eDeviceClass == vr::ETrackedDeviceClass::TrackedDeviceClass_Controller && m_openvrId == 1) {
+			yawVRUnityTesterPacket->ctrlr1Pos = newPoseWorldPos;
+			yawVRUnityTesterPacket->ctrlr1Rot = newPoseWorldRot;
+		} else if (m_eDeviceClass == vr::ETrackedDeviceClass::TrackedDeviceClass_Controller && m_openvrId == 2) {
+			yawVRUnityTesterPacket->ctrlr2Pos = newPoseWorldPos;
+			yawVRUnityTesterPacket->ctrlr2Rot = newPoseWorldRot;
+		}
+		else if (m_eDeviceClass == vr::ETrackedDeviceClass::TrackedDeviceClass_TrackingReference && m_openvrId == 1) {
+			yawVRUnityTesterPacket->tref1Pos = newPoseWorldPos;
+			yawVRUnityTesterPacket->tref1Rot = newPoseWorldRot;
+		} else if (m_eDeviceClass == vr::ETrackedDeviceClass::TrackedDeviceClass_TrackingReference && m_openvrId == 2) {
+			yawVRUnityTesterPacket->tref2Pos = newPoseWorldPos;
+			yawVRUnityTesterPacket->tref2Rot = newPoseWorldRot;
+		}
+		yawVRUnityTesterUdpClient.unlockPacket();
+	}
+
 	if (m_deviceMode == 1) { // fake disconnect mode
 		if (!_disconnectedMsgSend) {
 			newPose.poseIsValid = false;
@@ -91,15 +119,16 @@ bool DeviceManipulationHandle::handlePoseUpdate(uint32_t& unWhichDevice, vr::Dri
 		return false;
 
 	} else if (m_deviceMode == 5) { // motion compensation mode
-		auto serverDriver = ServerDriver::getInstance();
 		if (serverDriver) {
 			if (newPose.poseIsValid && newPose.result == vr::TrackingResult_Running_OK) {
 				m_motionCompensationManager._setMotionCompensationStatus(MotionCompensationStatus::Running);
 				if (!m_motionCompensationManager._isMotionCompensationZeroPoseValid()) {
 					m_motionCompensationManager._setMotionCompensationZeroPose(newPose);
+					m_motionCompensationManager._setMotionCompensationYawVRZeroPose(serverDriver->yawVRUdpClient().getSimRotation(), this);
 					serverDriver->sendReplySetMotionCompensationMode(true);
 				} else {
 					m_motionCompensationManager._updateMotionCompensationRefPose(newPose);
+					m_motionCompensationManager._updateMotionCompensationYawVRRefPose(serverDriver->yawVRUdpClient().getSimRotation(), this);
 				}
 			} else {
 				if (!m_motionCompensationManager._isMotionCompensationZeroPoseValid()) {
@@ -111,6 +140,12 @@ bool DeviceManipulationHandle::handlePoseUpdate(uint32_t& unWhichDevice, vr::Dri
 			}
 		}
 		return true;
+		// YawVR : todo here we will use any controller to set shell pivot zero pos/rot (center of the half dome) and YawVR zero angles,
+		// the ref pose will then be the zero pos/rot rotated by YawVR diff angles,
+		// updated pos/rot computation is unchanged
+		// 1- get all devices pos/rot, send to unity to check
+		// 2- implement ctrlr zero pos on shell pivot and align unity shell to simulate
+		// 3- check the updated motion compensated devices (1:hmd, 2:other ctrlr, 4:TrackingReferencex2) are well compensated
 
 	} else {
 		if (m_offsetsEnabled) {
@@ -137,8 +172,12 @@ bool DeviceManipulationHandle::handlePoseUpdate(uint32_t& unWhichDevice, vr::Dri
 			}
 		}
 		
-		m_motionCompensationManager._applyMotionCompensation(newPose, this);
-		
+//		m_motionCompensationManager._applyMotionCompensation(newPose, this);
+		auto serverDriver = ServerDriver::getInstance();
+		if (serverDriver) {
+			m_motionCompensationManager._applyMotionCompensationYawVR(newPose, serverDriver->yawVRUdpClient().getSimRotation(), this);
+		}
+
 		if (m_deviceMode == 2 && !m_redirectSuspended) { // redirect source
 			m_redirectRef->ll_sendPoseUpdate(newPose);
 			if (!_disconnectedMsgSend) {

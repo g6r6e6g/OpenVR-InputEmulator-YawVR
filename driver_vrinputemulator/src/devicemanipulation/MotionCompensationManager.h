@@ -43,8 +43,11 @@ public:
 	void _disableMotionCompensationOnAllDevices();
 	bool _isMotionCompensationZeroPoseValid();
 	void _setMotionCompensationZeroPose(const vr::DriverPose_t& pose);
+	void _setMotionCompensationYawVRZeroPose(const vr::HmdQuaternion_t& yawVRSimRotation, DeviceManipulationHandle* deviceInfo);
 	void _updateMotionCompensationRefPose(const vr::DriverPose_t& pose);
+	void _updateMotionCompensationYawVRRefPose(const vr::HmdQuaternion_t& yawVRSimRotation, DeviceManipulationHandle* deviceInfo);
 	bool _applyMotionCompensation(vr::DriverPose_t& pose, DeviceManipulationHandle* deviceInfo);
+	bool _applyMotionCompensationYawVR(vr::DriverPose_t& pose, const vr::HmdQuaternion_t& yawVRSimRotation, DeviceManipulationHandle* deviceInfo);
 
 	void runFrame();
 
@@ -64,11 +67,17 @@ private:
 	bool _motionCompensationZeroPoseValid = false;
 	vr::HmdVector3d_t _motionCompensationZeroPos;
 	vr::HmdQuaternion_t _motionCompensationZeroRot;
+	// YawVR
+	vr::HmdVector3d_t _motionCompensationYawVRShellHMDRelativePos;
+	vr::HmdQuaternion_t _motionCompensationYawVRZeroRot;
 
 	bool _motionCompensationRefPoseValid = false;
 	vr::HmdVector3d_t _motionCompensationRefPos;
 	vr::HmdQuaternion_t _motionCompensationRotDiff;
 	vr::HmdQuaternion_t _motionCompensationRotDiffInv;
+	// YawVR
+	vr::HmdQuaternion_t _motionCompensationYawVRRotDiff;
+	vr::HmdQuaternion_t _motionCompensationYawVRRotDiffInv;
 
 	bool _motionCompensationRefVelAccValid = false;
 	vr::HmdVector3d_t _motionCompensationRefPosVel;

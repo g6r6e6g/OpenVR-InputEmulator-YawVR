@@ -343,3 +343,6 @@ ASALocalRun/
 
 # Local History for Visual Studio
 .localhistory/
+/third-party/boost_1_71_0
+/build
+/openvr/*
