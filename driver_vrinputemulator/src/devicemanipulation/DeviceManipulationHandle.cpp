@@ -87,17 +87,17 @@ bool DeviceManipulationHandle::handlePoseUpdate(uint32_t& unWhichDevice, vr::Dri
 			yawVRUnityTesterPacket->hmdPos = newPoseWorldPos;
 			yawVRUnityTesterPacket->hmdRot = newPoseWorldRot;
 		}
-		else if (m_eDeviceClass == vr::ETrackedDeviceClass::TrackedDeviceClass_Controller && m_openvrId == 1) {
+		else if (m_eDeviceClass == vr::ETrackedDeviceClass::TrackedDeviceClass_Controller && (m_openvrId%2) == 0) {
 			yawVRUnityTesterPacket->ctrlr1Pos = newPoseWorldPos;
 			yawVRUnityTesterPacket->ctrlr1Rot = newPoseWorldRot;
-		} else if (m_eDeviceClass == vr::ETrackedDeviceClass::TrackedDeviceClass_Controller && m_openvrId == 2) {
+		} else if (m_eDeviceClass == vr::ETrackedDeviceClass::TrackedDeviceClass_Controller && (m_openvrId%2) == 1) {
 			yawVRUnityTesterPacket->ctrlr2Pos = newPoseWorldPos;
 			yawVRUnityTesterPacket->ctrlr2Rot = newPoseWorldRot;
 		}
-		else if (m_eDeviceClass == vr::ETrackedDeviceClass::TrackedDeviceClass_TrackingReference && m_openvrId == 1) {
+		else if (m_eDeviceClass == vr::ETrackedDeviceClass::TrackedDeviceClass_TrackingReference && (m_openvrId%2) == 0) {
 			yawVRUnityTesterPacket->tref1Pos = newPoseWorldPos;
 			yawVRUnityTesterPacket->tref1Rot = newPoseWorldRot;
-		} else if (m_eDeviceClass == vr::ETrackedDeviceClass::TrackedDeviceClass_TrackingReference && m_openvrId == 2) {
+		} else if (m_eDeviceClass == vr::ETrackedDeviceClass::TrackedDeviceClass_TrackingReference && (m_openvrId%2) == 1) {
 			yawVRUnityTesterPacket->tref2Pos = newPoseWorldPos;
 			yawVRUnityTesterPacket->tref2Rot = newPoseWorldRot;
 		}

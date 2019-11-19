@@ -171,7 +171,7 @@
     </Link>
     <PostBuildEvent>
       <Command>echo Copying $(TargetPath) into Program Files (x86)\Steam\steamapps\common\SteamVR\drivers\00vrinputemulator\bin\win64
-xcopy /Y $(TargetPath) "C:\Program Files (x86)\Steam\steamapps\common\SteamVR\drivers\00vrinputemulator\bin\win64\."</Command>
+xcopy /Y $(TargetPath) "D:\Program Files (x86)\Steam\steamapps\common\SteamVR\drivers\00vrinputemulator\bin\win64\."</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -215,7 +215,7 @@ xcopy /Y $(TargetPath) "C:\Program Files (x86)\Steam\steamapps\common\SteamVR\dr
     </Link>
     <PostBuildEvent>
       <Command>echo Copying $(TargetPath) into Program Files (x86)\Steam\steamapps\common\SteamVR\drivers\00vrinputemulator\bin\win64
-xcopy /Y $(TargetPath) "C:\Program Files (x86)\Steam\steamapps\common\SteamVR\drivers\00vrinputemulator\bin\win64\."</Command>
+xcopy /Y $(TargetPath) "D:\Program Files (x86)\Steam\steamapps\common\SteamVR\drivers\00vrinputemulator\bin\win64\."</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

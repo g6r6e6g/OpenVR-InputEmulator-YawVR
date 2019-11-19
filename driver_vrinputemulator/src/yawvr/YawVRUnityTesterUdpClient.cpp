@@ -85,7 +85,17 @@ std::string YawVRUnityTesterUdpClient::getPacket() const {
 		m_lastPacket.mcZeroPos.v[0] % m_lastPacket.mcZeroPos.v[1] % m_lastPacket.mcZeroPos.v[2] %
 		m_lastPacket.mcZeroRot.x % m_lastPacket.mcZeroRot.y % m_lastPacket.mcZeroRot.z% m_lastPacket.mcZeroRot.w %
 		m_lastPacket.mcRefPos.v[0] % m_lastPacket.mcRefPos.v[1] % m_lastPacket.mcRefPos.v[2]%
-		m_lastPacket.mcRotDiff.x % m_lastPacket.mcRotDiff.y % m_lastPacket.mcRotDiff.z % m_lastPacket.mcRotDiff.w);
+		m_lastPacket.mcRotDiff.x % m_lastPacket.mcRotDiff.y % m_lastPacket.mcRotDiff.z % m_lastPacket.mcRotDiff.w %
+		m_lastPacket.hmdPos.v[0] % m_lastPacket.hmdPos.v[1] % m_lastPacket.hmdPos.v[2] %
+		m_lastPacket.hmdRot.x % m_lastPacket.hmdRot.y % m_lastPacket.hmdRot.z % m_lastPacket.hmdRot.w %
+		m_lastPacket.ctrlr1Pos.v[0] % m_lastPacket.ctrlr1Pos.v[1] % m_lastPacket.ctrlr1Pos.v[2] %
+		m_lastPacket.ctrlr1Rot.x % m_lastPacket.ctrlr1Rot.y % m_lastPacket.ctrlr1Rot.z % m_lastPacket.ctrlr1Rot.w %
+		m_lastPacket.ctrlr2Pos.v[0] % m_lastPacket.ctrlr2Pos.v[1] % m_lastPacket.ctrlr2Pos.v[2] %
+		m_lastPacket.ctrlr2Rot.x % m_lastPacket.ctrlr2Rot.y % m_lastPacket.ctrlr2Rot.z % m_lastPacket.ctrlr2Rot.w %
+		m_lastPacket.tref1Pos.v[0] % m_lastPacket.tref1Pos.v[1] % m_lastPacket.tref1Pos.v[2] %
+		m_lastPacket.tref1Rot.x % m_lastPacket.tref1Rot.y % m_lastPacket.tref1Rot.z % m_lastPacket.tref1Rot.w %
+		m_lastPacket.tref2Pos.v[0] % m_lastPacket.tref2Pos.v[1] % m_lastPacket.tref2Pos.v[2] %
+		m_lastPacket.tref2Rot.x % m_lastPacket.tref2Rot.y % m_lastPacket.tref2Rot.z % m_lastPacket.tref2Rot.w);
 }
 
 void YawVRUnityTesterUdpClient::_udpClientThreadFunc(YawVRUnityTesterUdpClient* _this) {
