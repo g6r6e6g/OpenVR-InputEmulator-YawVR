@@ -102,7 +102,7 @@ void YawVRUnityTesterUdpClient::_udpClientThreadFunc(YawVRUnityTesterUdpClient* 
 	SOCKET sockfd = INVALID_SOCKET;
 	SOCKADDR_IN sockAddr;
 	int addrLen = sizeof(sockAddr);
-	char sndBuffer[YAWVRUNITYTESTER_UDP_PORT];
+	char sndBuffer[4096];
 	int sndSize;
 
 	_this->_udpClientThreadRunning = true;

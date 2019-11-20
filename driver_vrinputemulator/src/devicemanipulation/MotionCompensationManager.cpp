@@ -2,6 +2,7 @@
 
 #include "DeviceManipulationHandle.h"
 #include "../driver/ServerDriver.h"
+#include <openvr.h>
 
 
 // driver namespace
@@ -19,8 +20,6 @@ void MotionCompensationManager::enableMotionCompensation(bool enable) {
 			handle->setLastPoseTime(-1);
 		});
 	}
-	// YawVR
-	_motionCompensationYawVRShellHMDRelativePos = { 0.0, -1.0, 0.0 };
 }
 
 void MotionCompensationManager::setMotionCompensationRefDevice(DeviceManipulationHandle* device) {
@@ -94,11 +93,28 @@ void MotionCompensationManager::_setMotionCompensationZeroPose(const vr::DriverP
 }
 
 void MotionCompensationManager::_setMotionCompensationYawVRZeroPose(const vr::HmdQuaternion_t& yawVRSimRotation, DeviceManipulationHandle* deviceInfo) {
-//	_motionCompensationZeroPos = _motionCompensationZeroPos + _motionCompensationYawVRShellHMDRelativePos;
-//	_motionCompensationYawVRZeroRot = yawVRSimRotation;
+	_motionCompensationZeroPos = _motionCompensationZeroPos + vr::HmdVector3d_t{ 0.0, -0.1, +1.0 };
+	_motionCompensationYawVRZeroRot = yawVRSimRotation;
 	LOG(TRACE) << "MotionCompensationManager::_setMotionCompensationYawVRZeroPose: (ETrackedDeviceClass:" << deviceInfo->deviceClass() << ", openvrId:" << deviceInfo->openvrId() << ") _motionCompensationYawVRZeroRot:(" << _motionCompensationYawVRZeroRot.x << ", " << _motionCompensationYawVRZeroRot.y << ", " << _motionCompensationYawVRZeroRot.z << ", " << _motionCompensationYawVRZeroRot.w << ")";
 
 	_motionCompensationZeroPoseValid = true;
+/*	auto serverDriver = ServerDriver::getInstance();
+	if (serverDriver) {
+		DeviceManipulationHandle* hmdDeviceManipulationHandle = serverDriver->getDeviceManipulationHandleById(vr::k_unTrackedDeviceIndex_Hmd);
+		if (hmdDeviceManipulationHandle != nullptr) {
+			vr::DriverPose_t hmdPose = hmdDeviceManipulationHandle->lastDriverPose();
+			// convert pose from driver space to app space
+			auto tmpConj = vrmath::quaternionConjugate(hmdPose.qWorldFromDriverRotation);
+			auto hmdPoseWorldPos = vrmath::quaternionRotateVector(hmdPose.qWorldFromDriverRotation, tmpConj, hmdPose.vecPosition, true) - hmdPose.vecWorldFromDriverTranslation;
+			auto hmdPoseWorldRot = tmpConj * hmdPose.qRotation;
+
+			_motionCompensationZeroPos = _motionCompensationZeroPos + _motionCompensationYawVRShellHMDRelativePos;
+
+			LOG(TRACE) << "MotionCompensationManager::_setMotionCompensationYawVRZeroPose: (ETrackedDeviceClass:" << deviceInfo->deviceClass() << ", openvrId:" << deviceInfo->openvrId() << ") _motionCompensationYawVRZeroRot:(" << _motionCompensationYawVRZeroRot.x << ", " << _motionCompensationYawVRZeroRot.y << ", " << _motionCompensationYawVRZeroRot.z << ", " << _motionCompensationYawVRZeroRot.w << ")";
+
+			_motionCompensationZeroPoseValid = true;
+		}
+	}*/
 }
 
 void MotionCompensationManager::_updateMotionCompensationRefPose(const vr::DriverPose_t& pose) {

@@ -68,7 +68,6 @@ private:
 	vr::HmdVector3d_t _motionCompensationZeroPos;
 	vr::HmdQuaternion_t _motionCompensationZeroRot;
 	// YawVR
-	vr::HmdVector3d_t _motionCompensationYawVRShellHMDRelativePos;
 	vr::HmdQuaternion_t _motionCompensationYawVRZeroRot;
 
 	bool _motionCompensationRefPoseValid = false;
