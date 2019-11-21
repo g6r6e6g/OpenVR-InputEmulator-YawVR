@@ -2,7 +2,6 @@
 
 #include "DeviceManipulationHandle.h"
 #include "../driver/ServerDriver.h"
-#include <openvr.h>
 
 
 // driver namespace
@@ -93,7 +92,7 @@ void MotionCompensationManager::_setMotionCompensationZeroPose(const vr::DriverP
 }
 
 void MotionCompensationManager::_setMotionCompensationYawVRZeroPose(const vr::HmdQuaternion_t& yawVRSimRotation, DeviceManipulationHandle* deviceInfo) {
-	_motionCompensationZeroPos = _motionCompensationZeroPos + vr::HmdVector3d_t{ 0.0, -0.1, +1.0 };
+	_motionCompensationZeroPos = _motionCompensationZeroPos + vr::HmdVector3d_t{ 0.0, -0.1, +0.3 }; // shell pivot should be 10cm below, 30cm behind
 	_motionCompensationYawVRZeroRot = yawVRSimRotation;
 	LOG(TRACE) << "MotionCompensationManager::_setMotionCompensationYawVRZeroPose: (ETrackedDeviceClass:" << deviceInfo->deviceClass() << ", openvrId:" << deviceInfo->openvrId() << ") _motionCompensationYawVRZeroRot:(" << _motionCompensationYawVRZeroRot.x << ", " << _motionCompensationYawVRZeroRot.y << ", " << _motionCompensationYawVRZeroRot.z << ", " << _motionCompensationYawVRZeroRot.w << ")";
 
@@ -144,8 +143,8 @@ void MotionCompensationManager::_updateMotionCompensationRefPose(const vr::Drive
 
 void MotionCompensationManager::_updateMotionCompensationYawVRRefPose(const vr::HmdQuaternion_t& yawVRSimRotation, DeviceManipulationHandle* deviceInfo) {
 	// calculate orientation difference and its inverse
-//	_motionCompensationYawVRRotDiff = yawVRSimRotation * vrmath::quaternionConjugate(_motionCompensationYawVRZeroRot);
-//	_motionCompensationYawVRRotDiffInv = vrmath::quaternionConjugate(_motionCompensationYawVRRotDiff);
+	_motionCompensationYawVRRotDiff = yawVRSimRotation * vrmath::quaternionConjugate(_motionCompensationYawVRZeroRot);
+	_motionCompensationYawVRRotDiffInv = vrmath::quaternionConjugate(_motionCompensationYawVRRotDiff);
 	LOG(TRACE) << "MotionCompensationManager::_updateMotionCompensationYawVRRefPose: (ETrackedDeviceClass:" << deviceInfo->deviceClass() << ", openvrId:" << deviceInfo->openvrId() << ") _motionCompensationYawVRRotDiff:(" << _motionCompensationYawVRRotDiff.x << ", " << _motionCompensationYawVRRotDiff.y << ", " << _motionCompensationYawVRRotDiff.z << ", " << _motionCompensationYawVRRotDiff.w << ")";
 
 	_motionCompensationRefPoseValid = true;
