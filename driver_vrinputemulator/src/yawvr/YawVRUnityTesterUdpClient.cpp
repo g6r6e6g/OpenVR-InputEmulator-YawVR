@@ -21,7 +21,8 @@ HPX[%.03f]HPY[%.03f]HPZ[%.03f]HRX[%.03f]HRY[%.03f]HRZ[%.03f]HRW[%.03f]\
 C1PX[%.03f]C1PY[%.03f]C1PZ[%.03f]C1RX[%.03f]C1RY[%.03f]C1RZ[%.03f]C1RW[%.03f]\
 C2PX[%.03f]C2PY[%.03f]C2PZ[%.03f]C2RX[%.03f]C2RY[%.03f]C2RZ[%.03f]C2RW[%.03f]\
 T1PX[%.03f]T1PY[%.03f]T1PZ[%.03f]T1RX[%.03f]T1RY[%.03f]T1RZ[%.03f]T1RW[%.03f]\
-T2PX[%.03f]T2PY[%.03f]T2PZ[%.03f]T2RX[%.03f]T2RY[%.03f]T2RZ[%.03f]T2RW[%.03f]"
+T2PX[%.03f]T2PY[%.03f]T2PZ[%.03f]T2RX[%.03f]T2RY[%.03f]T2RZ[%.03f]T2RW[%.03f]\
+MCHPX[%.03f]MCHPY[%.03f]MCHPZ[%.03f]MCHRX[%.03f]MCHRY[%.03f]MCHRZ[%.03f]MCHRW[%.03f]"
 
 namespace vrinputemulator {
 namespace driver {
@@ -34,7 +35,8 @@ std::string YawVRUnityTesterPacket_t::getString() {
  ctrlr1Pos:(%.3f, %.3f, %.3f), ctrlr1Rot:(%.3f, %.3f, %.3f, %.3f),\
  ctrlr2Pos:(%.3f, %.3f, %.3f), ctrlr2Rot:(%.3f, %.3f, %.3f, %.3f),\
  tref1Pos:(%.3f, %.3f, %.3f), tref1Rot:(%.3f, %.3f, %.3f, %.3f),\
- tref2Pos:(%.3f, %.3f, %.3f), tref2Rot:(%.3f, %.3f, %.3f, %.3f))") %
+ tref2Pos:(%.3f, %.3f, %.3f), tref2Rot:(%.3f, %.3f, %.3f, %.3f),\
+ mcHmdPos:(%.3f, %.3f, %.3f), mcHmdRot:(%.3f, %.3f, %.3f, %.3f))") %
 		simYawPitchRoll.v[0] % simYawPitchRoll.v[1] % simYawPitchRoll.v[2] %
 		mcZeroPos.v[0] % mcZeroPos.v[1] % mcZeroPos.v[2] %
 		mcZeroRot.x % mcZeroRot.y % mcZeroRot.z% mcZeroRot.w %
@@ -49,7 +51,9 @@ std::string YawVRUnityTesterPacket_t::getString() {
 		tref1Pos.v[0] % tref1Pos.v[1] % tref1Pos.v[2] %
 		tref1Rot.x % tref1Rot.y % tref1Rot.z% tref1Rot.w %
 		tref2Pos.v[0] % tref2Pos.v[1] % tref2Pos.v[2] %
-		tref2Rot.x % tref2Rot.y % tref2Rot.z% tref2Rot.w);
+		tref2Rot.x % tref2Rot.y % tref2Rot.z% tref2Rot.w %
+		mcHmdPos.v[0] % mcHmdPos.v[1] % mcHmdPos.v[2] %
+		mcHmdRot.x % mcHmdRot.y % mcHmdRot.z % mcHmdRot.w);
 }
 
 void YawVRUnityTesterUdpClient::init() {
@@ -95,7 +99,9 @@ std::string YawVRUnityTesterUdpClient::getPacket() const {
 		m_lastPacket.tref1Pos.v[0] % m_lastPacket.tref1Pos.v[1] % m_lastPacket.tref1Pos.v[2] %
 		m_lastPacket.tref1Rot.x % m_lastPacket.tref1Rot.y % m_lastPacket.tref1Rot.z % m_lastPacket.tref1Rot.w %
 		m_lastPacket.tref2Pos.v[0] % m_lastPacket.tref2Pos.v[1] % m_lastPacket.tref2Pos.v[2] %
-		m_lastPacket.tref2Rot.x % m_lastPacket.tref2Rot.y % m_lastPacket.tref2Rot.z % m_lastPacket.tref2Rot.w);
+		m_lastPacket.tref2Rot.x % m_lastPacket.tref2Rot.y % m_lastPacket.tref2Rot.z % m_lastPacket.tref2Rot.w %
+		m_lastPacket.mcHmdPos.v[0] % m_lastPacket.mcHmdPos.v[1] % m_lastPacket.mcHmdPos.v[2] %
+		m_lastPacket.mcHmdRot.x % m_lastPacket.mcHmdRot.y % m_lastPacket.mcHmdRot.z % m_lastPacket.mcHmdRot.w);
 }
 
 void YawVRUnityTesterUdpClient::_udpClientThreadFunc(YawVRUnityTesterUdpClient* _this) {

@@ -76,6 +76,7 @@ AnalogInputRemapping DeviceManipulationHandle::getAnalogInputRemapping(uint32_t 
 bool DeviceManipulationHandle::handlePoseUpdate(uint32_t& unWhichDevice, vr::DriverPose_t& newPose, uint32_t unPoseStructSize) {
 	std::lock_guard<std::recursive_mutex> lock(_mutex);
 
+	// YawVR
 	auto serverDriver = ServerDriver::getInstance();
 	if (serverDriver) {
 		YawVRUnityTesterUdpClient& yawVRUnityTesterUdpClient = serverDriver->yawVRUnityTesterUdpServer();

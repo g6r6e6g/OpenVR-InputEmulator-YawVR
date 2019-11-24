@@ -54,7 +54,7 @@ const YawVRPacket_t& YawVRUdpClient::getLastPacket() const {
 }
 
 vr::HmdQuaternion_t YawVRUdpClient::getSimRotation() const {
-	return vrmath::quaternionFromYawPitchRoll(m_lastPacket.simYaw*M_PI/180.0, m_lastPacket.simPitch*M_PI/180.0, m_lastPacket.simRoll*M_PI/180.0);
+	return vrmath::quaternionFromYawPitchRoll(-m_lastPacket.simYaw*M_PI/180.0, m_lastPacket.simPitch*M_PI/180.0, -m_lastPacket.simRoll*M_PI/180.0);
 }
 
 bool YawVRUdpClient::parsePacket(const char *buffer, YawVRPacket_t& yawVRPacket) {

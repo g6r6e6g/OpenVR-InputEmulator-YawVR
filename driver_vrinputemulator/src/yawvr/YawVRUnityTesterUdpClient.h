@@ -34,6 +34,8 @@ struct YawVRUnityTesterPacket_t {
 	vr::HmdQuaternion_t tref1Rot;
 	vr::HmdVector3d_t tref2Pos;
 	vr::HmdQuaternion_t tref2Rot;
+	vr::HmdVector3d_t mcHmdPos;
+	vr::HmdQuaternion_t mcHmdRot;
 
 	std::string getString();
 };

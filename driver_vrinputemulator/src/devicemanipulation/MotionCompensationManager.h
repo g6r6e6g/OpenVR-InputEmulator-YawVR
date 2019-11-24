@@ -64,6 +64,10 @@ private:
 	double m_motionCompensationKalmanObservationVariance = 0.1;
 	unsigned m_motionCompensationMovingAverageWindow = 3;
 
+	// YawVR
+	static vr::HmdVector3d_t yawVRShellFront2Pivot; // shell pivot offset from the front of it
+	static vr::HmdVector3d_t yawVRShellPivot2Hmd; // hmd offset from the shell pivot
+
 	bool _motionCompensationZeroPoseValid = false;
 	vr::HmdVector3d_t _motionCompensationZeroPos;
 	vr::HmdQuaternion_t _motionCompensationZeroRot;
