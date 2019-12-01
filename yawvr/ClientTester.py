@@ -9,7 +9,7 @@ import keyboard
 YAWVR_TCP_IP = '192.168.1.18' # Emulator, just launch the Unity Emulator app
 #YAWVR_TCP_IP = '192.168.1.28' # Real YawVR device, start the Android app and start the device
 YAWVR_TCP_PORT = 50020
-# Yaw VR UDP server port to listen to (check you have a firewall rule : input UDP port 28067)
+# Yaw VR UDP server port to receive on (check you have a firewall rule : input UDP port 28067)
 # 20191022 : YawVR Android app displays version 38, this version ignores the requested port and send always on UDP port 28067
 YAWVR_UDP_IP = '0.0.0.0'
 YAWVR_UDP_PORT = 28067
@@ -81,14 +81,12 @@ print 'Connecting to YawVR %s:%d' % (YAWVR_TCP_IP, YAWVR_TCP_PORT)
 tcpsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 tcpsock.connect((YAWVR_TCP_IP, YAWVR_TCP_PORT))
 print 'Requesting checkin on UDP port : %d' % YAWVR_UDP_PORT
-print type(YAWVR_UDP_PORT_CHECKIN_TCP_PACKET_REQUEST)
-print len(YAWVR_UDP_PORT_CHECKIN_TCP_PACKET_REQUEST)
 print [hex(b) for b in YAWVR_UDP_PORT_CHECKIN_TCP_PACKET_REQUEST]
 tcpsock.send(YAWVR_UDP_PORT_CHECKIN_TCP_PACKET_REQUEST)
 yawVRTCPResponse = tcpsock.recv(YAWVR_BUFFER_SIZE)
 print 'TCP response received : %s' % yawVRTCPResponse
 
-print 'Listening YawVR on %s:%d' % (YAWVR_UDP_IP, YAWVR_UDP_PORT)
+print 'Receiving YawVR on %s:%d' % (YAWVR_UDP_IP, YAWVR_UDP_PORT)
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.bind((YAWVR_UDP_IP, YAWVR_UDP_PORT))
 sock.setblocking(0)
@@ -102,5 +100,7 @@ while not quit:
 		pass
 
 print 'Closing connection to YawVR.'
-sock.close()
-tcpsock.close()
+if sock:
+	sock.close()
+if tcpsock:
+	tcpsock.close()

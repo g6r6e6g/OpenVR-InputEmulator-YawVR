@@ -1,3 +1,4 @@
+#ifdef YAWVR
 #pragma once
 
 #include <thread>
@@ -67,3 +68,4 @@ private:
 
 } // end namespace driver
 } // end namespace vrinputemulator
+#endif

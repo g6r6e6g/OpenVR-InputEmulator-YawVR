@@ -43,17 +43,22 @@ public:
 	void _disableMotionCompensationOnAllDevices();
 	bool _isMotionCompensationZeroPoseValid();
 	void _setMotionCompensationZeroPose(const vr::DriverPose_t& pose);
-	void _setMotionCompensationYawVRZeroPose(const vr::HmdQuaternion_t& yawVRSimRotation, DeviceManipulationHandle* deviceInfo);
 	void _updateMotionCompensationRefPose(const vr::DriverPose_t& pose);
-	void _updateMotionCompensationYawVRRefPose(const vr::HmdQuaternion_t& yawVRSimRotation, DeviceManipulationHandle* deviceInfo);
 	bool _applyMotionCompensation(vr::DriverPose_t& pose, DeviceManipulationHandle* deviceInfo);
+#ifdef YAWVR
+	void _setMotionCompensationYawVRZeroPose(const vr::HmdQuaternion_t& yawVRSimRotation, DeviceManipulationHandle* deviceInfo);
+	void _updateMotionCompensationYawVRRefPose(const vr::HmdQuaternion_t& yawVRSimRotation, DeviceManipulationHandle* deviceInfo);
 	bool _applyMotionCompensationYawVR(vr::DriverPose_t& pose, const vr::HmdQuaternion_t& yawVRSimRotation, DeviceManipulationHandle* deviceInfo);
+#endif
 
 	void runFrame();
 
 private:
 	ServerDriver* m_parent;
 
+#ifdef YAWVR
+	static vr::HmdVector3d_t ctrlr2YawVRShellPivot; // controller to shell pivot offset
+#endif
 	bool _motionCompensationEnabled = false;
 	DeviceManipulationHandle* _motionCompensationRefDevice = nullptr;
 	MotionCompensationStatus _motionCompensationStatus = MotionCompensationStatus::WaitingForZeroRef;
@@ -64,23 +69,21 @@ private:
 	double m_motionCompensationKalmanObservationVariance = 0.1;
 	unsigned m_motionCompensationMovingAverageWindow = 3;
 
-	// YawVR
-	static vr::HmdVector3d_t yawVRShellFront2Pivot; // shell pivot offset from the front of it
-	static vr::HmdVector3d_t yawVRShellPivot2Hmd; // hmd offset from the shell pivot
-
 	bool _motionCompensationZeroPoseValid = false;
 	vr::HmdVector3d_t _motionCompensationZeroPos;
 	vr::HmdQuaternion_t _motionCompensationZeroRot;
-	// YawVR
+#ifdef YAWVR
 	vr::HmdQuaternion_t _motionCompensationYawVRZeroRot;
+#endif
 
 	bool _motionCompensationRefPoseValid = false;
 	vr::HmdVector3d_t _motionCompensationRefPos;
 	vr::HmdQuaternion_t _motionCompensationRotDiff;
 	vr::HmdQuaternion_t _motionCompensationRotDiffInv;
-	// YawVR
+#ifdef YAWVR
 	vr::HmdQuaternion_t _motionCompensationYawVRRotDiff;
 	vr::HmdQuaternion_t _motionCompensationYawVRRotDiffInv;
+#endif
 
 	bool _motionCompensationRefVelAccValid = false;
 	vr::HmdVector3d_t _motionCompensationRefPosVel;

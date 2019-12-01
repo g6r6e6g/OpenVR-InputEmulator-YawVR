@@ -84,10 +84,29 @@ inline vr::HmdVector3d_t operator/(const vr::HmdVector3d_t& lhs, const double rh
 }
 
 
+inline vr::HmdVector3d_t operator|(const vr::HmdVector3d_t& lhs, const vr::HmdVector3d_t& rhs) {
+	return{
+		lhs.v[1] * rhs.v[2] - rhs.v[1] * lhs.v[2],
+		lhs.v[2] * rhs.v[1] - rhs.v[2] * lhs.v[0],
+		lhs.v[0] * rhs.v[0] - rhs.v[0] * lhs.v[1]
+	};
+}
+
+
 namespace vrmath {
 
 	template<typename T> int signum(T v) {
 		return (v > (T)0) ? 1 : ((v < (T)0) ? -1 : 0);
+	}
+
+
+	inline vr::HmdVector3d_t vectorNormalize(const vr::HmdVector3d_t& vector) {
+		auto a = sqrt(vector.v[0] * vector.v[0] + vector.v[1] * vector.v[1] + vector.v[2] * vector.v[2]);
+		return{
+			vector.v[0] / a,
+			vector.v[1] / a,
+			vector.v[2] / a
+		};
 	}
 
 	inline vr::HmdQuaternion_t quaternionFromRotationAxis(double rot, double ux, double uy, double uz) {

@@ -1,3 +1,4 @@
+#ifdef YAWVR
 #include "YawVRUnityTesterUdpClient.h"
 
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
@@ -135,7 +136,7 @@ void YawVRUnityTesterUdpClient::_udpClientThreadFunc(YawVRUnityTesterUdpClient* 
 					sockAddr.sin_addr.s_addr = inet_addr(YAWVRUNITYTESTER_UDP_CLIENT);
 				}
 				if (sockfd != INVALID_SOCKET && boost::posix_time::microsec_clock::universal_time() > _this->m_lastPacketSentTime + boost::posix_time::milliseconds(1000*int(1.0f/YAWVR_CNX_PACKET_SEND_FREQ))) {
-					LOG(DEBUG) << "YawVRUnityTesterUdpClient::_udpClientThreadFunc: sending packet : " << _this->m_lastPacket.getString();
+					//LOG(DEBUG) << "YawVRUnityTesterUdpClient::_udpClientThreadFunc: sending packet : " << _this->m_lastPacket.getString();
 					_this->m_lastPacketSentTime = boost::posix_time::microsec_clock::universal_time();
 					std::string packet = _this->getPacket();
 					strcpy_s(sndBuffer, packet.c_str());
@@ -175,3 +176,4 @@ void YawVRUnityTesterUdpClient::_udpClientThreadFunc(YawVRUnityTesterUdpClient* 
 
 } // end namespace driver
 } // end namespace vrinputemulator
+#endif

@@ -76,7 +76,7 @@ AnalogInputRemapping DeviceManipulationHandle::getAnalogInputRemapping(uint32_t 
 bool DeviceManipulationHandle::handlePoseUpdate(uint32_t& unWhichDevice, vr::DriverPose_t& newPose, uint32_t unPoseStructSize) {
 	std::lock_guard<std::recursive_mutex> lock(_mutex);
 
-	// YawVR
+#ifdef YAWVR
 	auto serverDriver = ServerDriver::getInstance();
 	if (serverDriver) {
 		YawVRUnityTesterUdpClient& yawVRUnityTesterUdpClient = serverDriver->yawVRUnityTesterUdpServer();
@@ -104,6 +104,7 @@ bool DeviceManipulationHandle::handlePoseUpdate(uint32_t& unWhichDevice, vr::Dri
 		}
 		yawVRUnityTesterUdpClient.unlockPacket();
 	}
+#endif
 
 	if (m_deviceMode == 1) { // fake disconnect mode
 		if (!_disconnectedMsgSend) {
@@ -120,16 +121,23 @@ bool DeviceManipulationHandle::handlePoseUpdate(uint32_t& unWhichDevice, vr::Dri
 		return false;
 
 	} else if (m_deviceMode == 5) { // motion compensation mode
+#ifndef YAWVR
+		auto serverDriver = ServerDriver::getInstance();
+#endif
 		if (serverDriver) {
 			if (newPose.poseIsValid && newPose.result == vr::TrackingResult_Running_OK) {
 				m_motionCompensationManager._setMotionCompensationStatus(MotionCompensationStatus::Running);
 				if (!m_motionCompensationManager._isMotionCompensationZeroPoseValid()) {
 					m_motionCompensationManager._setMotionCompensationZeroPose(newPose);
+#ifdef YAWVR
 					m_motionCompensationManager._setMotionCompensationYawVRZeroPose(serverDriver->yawVRUdpClient().getSimRotation(), this);
+#endif
 					serverDriver->sendReplySetMotionCompensationMode(true);
 				} else {
 					m_motionCompensationManager._updateMotionCompensationRefPose(newPose);
+#ifdef YAWVR
 					m_motionCompensationManager._updateMotionCompensationYawVRRefPose(serverDriver->yawVRUdpClient().getSimRotation(), this);
+#endif
 				}
 			} else {
 				if (!m_motionCompensationManager._isMotionCompensationZeroPoseValid()) {
@@ -141,12 +149,6 @@ bool DeviceManipulationHandle::handlePoseUpdate(uint32_t& unWhichDevice, vr::Dri
 			}
 		}
 		return true;
-		// YawVR : todo here we will use any controller to set shell pivot zero pos/rot (center of the half dome) and YawVR zero angles,
-		// the ref pose will then be the zero pos/rot rotated by YawVR diff angles,
-		// updated pos/rot computation is unchanged
-		// 1- get all devices pos/rot, send to unity to check
-		// 2- implement ctrlr zero pos on shell pivot and align unity shell to simulate
-		// 3- check the updated motion compensated devices (1:hmd, 2:other ctrlr, 4:TrackingReferencex2) are well compensated
 
 	} else {
 		if (m_offsetsEnabled) {
@@ -173,12 +175,15 @@ bool DeviceManipulationHandle::handlePoseUpdate(uint32_t& unWhichDevice, vr::Dri
 			}
 		}
 		
-//		m_motionCompensationManager._applyMotionCompensation(newPose, this);
+#ifdef YAWVR
 		auto serverDriver = ServerDriver::getInstance();
 		if (serverDriver) {
 			m_motionCompensationManager._applyMotionCompensationYawVR(newPose, serverDriver->yawVRUdpClient().getSimRotation(), this);
 		}
-
+#else
+		m_motionCompensationManager._applyMotionCompensation(newPose, this);
+#endif
+		
 		if (m_deviceMode == 2 && !m_redirectSuspended) { // redirect source
 			m_redirectRef->ll_sendPoseUpdate(newPose);
 			if (!_disconnectedMsgSend) {

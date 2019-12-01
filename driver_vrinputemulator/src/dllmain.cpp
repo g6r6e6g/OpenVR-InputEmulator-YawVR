@@ -11,12 +11,20 @@ const char* logConfigDefault =
 "	TO_STANDARD_OUTPUT = true\n"
 "	MAX_LOG_FILE_SIZE = 2097152 ## 2MB\n"
 "* TRACE:\n"
+#ifdef YAWVR
 "	ENABLED = true\n"
 "* DEBUG:\n"
+"	ENABLED = true\n";
+#else
+"	ENABLED = false\n"
+"* DEBUG:\n"
 "	ENABLED = false\n";
+#endif
 
+#ifdef YAWVR
 WSADATA wsaData;
 bool wsaInitialized = false;
+#endif
 
 INITIALIZE_EASYLOGGINGPP
 
@@ -29,6 +37,7 @@ void init_logging() {
 	el::Loggers::reconfigureAllLoggers(conf);
 }
 
+#ifdef YAWVR
 void init_socketLibrary() {
 	if (wsaInitialized)
 		return;
@@ -53,6 +62,7 @@ void shutdown_socketLibrary() {
 		LOG(ERROR) << "Error while finalizing Window sockets library: Error code " << err;
 	}
 }
+#endif
 
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,
@@ -61,14 +71,21 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 	switch (ul_reason_for_call) {
 		case DLL_PROCESS_ATTACH:
 			init_logging();
+#ifdef YAWVR
 			init_socketLibrary();
+#endif
 			LOG(INFO) << "VRInputEmulator dll loaded...";
 			break;
 		case DLL_THREAD_ATTACH:
+#ifdef YAWVR
 		case DLL_THREAD_DETACH:
 			break;
 		case DLL_PROCESS_DETACH:
 			shutdown_socketLibrary();
+#else
+		case DLL_THREAD_DETACH:
+		case DLL_PROCESS_DETACH:
+#endif
 			break;
 	}
 	return TRUE;

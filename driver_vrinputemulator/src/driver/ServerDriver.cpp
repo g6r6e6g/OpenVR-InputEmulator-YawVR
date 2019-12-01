@@ -15,7 +15,11 @@ ServerDriver* ServerDriver::singleton = nullptr;
 std::string ServerDriver::installDir;
 
 
+#ifdef YAWVR
 ServerDriver::ServerDriver() : m_yawVRUdpClient(), m_motionCompensation(this) {
+#else
+ServerDriver::ServerDriver() : m_motionCompensation(this) {
+#endif
 	singleton = this;
 	memset(m_openvrIdToVirtualDeviceMap, 0, sizeof(VirtualDeviceDriver*) * vr::k_unMaxTrackedDeviceCount);
 	memset(_openvrIdToDeviceManipulationHandleMap, 0, sizeof(DeviceManipulationHandle*) * vr::k_unMaxTrackedDeviceCount);
@@ -337,10 +341,12 @@ vr::EVRInitError ServerDriver::Init(vr::IVRDriverContext *pDriverContext) {
 	// Start IPC thread
 	shmCommunicator.init(this);
 
+#ifdef YAWVR
 	// Start YawVR UDP client thread
 	m_yawVRUdpClient.init();
 	// Start YawVRUnityTester UDP client thread
 	m_yawVRUnityTesterUdpClient.init();
+#endif
 
 	return vr::VRInitError_None;
 }
@@ -350,8 +356,10 @@ void ServerDriver::Cleanup() {
 	LOG(TRACE) << "CServerDriver::Cleanup()";
 	_driverContextHooks.reset();
 	MH_Uninitialize();
+#ifdef YAWVR
 	m_yawVRUdpClient.shutdown();
 	m_yawVRUnityTesterUdpClient.shutdown();
+#endif
 	shmCommunicator.shutdown();
 	VR_CLEANUP_SERVER_DRIVER_CONTEXT();
 }
@@ -370,10 +378,12 @@ void ServerDriver::RunFrame() {
 	}
 	m_motionCompensation.runFrame();
 
+#ifdef YAWVR
 	YawVRPacket_t yawVRPacket = m_yawVRUdpClient.getLastPacket();
 	YawVRUnityTesterPacket_t* yawVRUnityTesterPacket = m_yawVRUnityTesterUdpClient.lockPacket();
 	yawVRUnityTesterPacket->simYawPitchRoll = { yawVRPacket.simYaw, yawVRPacket.simPitch, yawVRPacket.simRoll };
 	m_yawVRUnityTesterUdpClient.unlockPacket();
+#endif
 }
 
 

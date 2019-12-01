@@ -1,3 +1,4 @@
+#ifdef YAWVR
 #pragma once
 
 #include <thread>
@@ -35,8 +36,8 @@ public:
 	void init();
 	void shutdown();
 
-	const YawVRPacket_t& getLastPacket() const;
-	vr::HmdQuaternion_t getSimRotation() const;
+	YawVRPacket_t getLastPacket();
+	vr::HmdQuaternion_t getSimRotation();
 
 private:
 	static void _udpClientThreadFunc(YawVRUdpClient* _this);
@@ -46,9 +47,12 @@ private:
 	volatile bool _udpClientThreadRunning = false;
 	volatile bool _udpClientThreadStopFlag = false;
 	boost::posix_time::ptime m_nextConnectionAttemptTime;
+	boost::posix_time::ptime m_lastLogTime;
+	std::mutex _mutex;
 	YawVRPacket_t m_lastPacket;
 };
 
 
 } // end namespace driver
 } // end namespace vrinputemulator
+#endif

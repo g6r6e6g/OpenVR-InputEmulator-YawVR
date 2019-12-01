@@ -9,8 +9,10 @@
 #include "../hooks/common.h"
 #include "../logging.h"
 #include "../com/shm/driver_ipc_shm.h"
+#ifdef YAWVR
 #include "../yawvr/YawVRUdpClient.h"
 #include "../yawvr/YawVRUnityTesterUdpClient.h"
+#endif
 #include "../devicemanipulation/MotionCompensationManager.h"
 
 
@@ -107,10 +109,12 @@ public:
 	/** Called by virtual devices when they are deactivated */
 	void _trackedDeviceDeactivated(uint32_t deviceId);
 
+#ifdef YAWVR
 	/* YawVR UDP client related */
 	YawVRUdpClient& yawVRUdpClient() { return m_yawVRUdpClient; }
 	/* YawVRUnityTester UDP client related */
 	YawVRUnityTesterUdpClient& yawVRUnityTesterUdpServer() { return m_yawVRUnityTesterUdpClient; }
+#endif
 
 	/* Motion Compensation related */
 	MotionCompensationManager& motionCompensation() { return m_motionCompensation; }
@@ -165,10 +169,12 @@ private:
 	std::map<void*, DeviceManipulationHandle*> _ptrToDeviceManipulationHandleMap;
 	std::map<uint64_t, DeviceManipulationHandle*> _inputComponentToDeviceManipulationHandleMap;
 
+#ifdef YAWVR
 	//// YawVR UDP client related ////
 	YawVRUdpClient m_yawVRUdpClient;
 	//// YawVRUnityTester UDP server related ////
 	YawVRUnityTesterUdpClient m_yawVRUnityTesterUdpClient;
+#endif
 
 	//// motion compensation related ////
 	MotionCompensationManager m_motionCompensation;

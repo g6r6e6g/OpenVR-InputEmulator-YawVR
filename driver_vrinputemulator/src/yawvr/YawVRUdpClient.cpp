@@ -1,6 +1,9 @@
+#ifdef YAWVR
 #include "YawVRUdpClient.h"
 
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
 #include <winsock2.h>
+//#include <Ws2tcpip.h>
 #define _USE_MATH_DEFINES
 #include <cmath>
 #include <boost/format.hpp>
@@ -9,7 +12,11 @@
 #include <boost/lexical_cast.hpp>
 #include "../driver/ServerDriver.h"
 
+//#define YAWVR_TCP_IP				"192.168.1.18" // Emulator, just launch the Unity Emulator app
+#define YAWVR_TCP_IP				"192.168.1.28" // Real YawVR device, start the Android appand start the device
+#define YAWVR_TCP_PORT				50020
 #define YAWVR_UDP_PORT				28067
+#define YAWVR_UDP_PORT_CHECKIN_GAME_NAME	"YawVRMotionCompensation"
 #define YAWVR_CNX_ATTEMPT_DELAY_SEC	5		
 #define YAWVR_UDP_PACKET_MAXSIZE	256
 #define YAWVR_UDP_PACKET_SIMYAW		"simYaw"
@@ -38,6 +45,7 @@ void YawVRUdpClient::init() {
 	_udpClientThread = std::thread(_udpClientThreadFunc, this);
 	LOG(DEBUG) << "YawVRUdpClient::init: thread created";
 	m_nextConnectionAttemptTime = boost::posix_time::microsec_clock::universal_time();
+	m_lastLogTime = boost::posix_time::microsec_clock::universal_time();
 }
 
 void YawVRUdpClient::shutdown() {
@@ -49,12 +57,20 @@ void YawVRUdpClient::shutdown() {
 	}
 }
 
-const YawVRPacket_t& YawVRUdpClient::getLastPacket() const {
+YawVRPacket_t YawVRUdpClient::getLastPacket() {
+	std::lock_guard<std::mutex> guard(_mutex);
 	return m_lastPacket;
 }
 
-vr::HmdQuaternion_t YawVRUdpClient::getSimRotation() const {
-	return vrmath::quaternionFromYawPitchRoll(-m_lastPacket.simYaw*M_PI/180.0, m_lastPacket.simPitch*M_PI/180.0, -m_lastPacket.simRoll*M_PI/180.0);
+vr::HmdQuaternion_t YawVRUdpClient::getSimRotation() {
+	std::lock_guard<std::mutex> guard(_mutex);
+#if RIFT
+	return vrmath::quaternionFromYawPitchRoll(-m_lastPacket.simYaw * M_PI / 180.0, m_lastPacket.simPitch * M_PI / 180.0, -m_lastPacket.simRoll * M_PI / 180.0);
+#elif INDEX
+	return vrmath::quaternionFromYawPitchRoll(-m_lastPacket.simRoll * M_PI / 180.0, m_lastPacket.simYaw * M_PI / 180.0, m_lastPacket.simPitch * M_PI / 180.0);
+#endif
+	// TODO check/tune/improve offset ctrlr/shell pivot into steamvr space,
+	// TODO avoid stop compensate if ctrlr tracking becomes invalid
 }
 
 bool YawVRUdpClient::parsePacket(const char *buffer, YawVRPacket_t& yawVRPacket) {
@@ -78,6 +94,7 @@ bool YawVRUdpClient::parsePacket(const char *buffer, YawVRPacket_t& yawVRPacket)
 }
 
 void YawVRUdpClient::_udpClientThreadFunc(YawVRUdpClient* _this) {
+	SOCKET tcpSockfd = INVALID_SOCKET;
 	SOCKET sockfd = INVALID_SOCKET;
 	SOCKADDR_IN sockAddr;
 	int addrLen = sizeof(sockAddr);
@@ -90,13 +107,58 @@ void YawVRUdpClient::_udpClientThreadFunc(YawVRUdpClient* _this) {
 		while (!_this->_udpClientThreadStopFlag) {
 			try {
 				if (sockfd == INVALID_SOCKET && boost::posix_time::microsec_clock::universal_time() > _this->m_nextConnectionAttemptTime) {
-					LOG(TRACE) << "YawVRUdpClient::_udpClientThreadFunc: Connecting to YawVR (port " << YAWVR_UDP_PORT << ") ...";
+					if (tcpSockfd == INVALID_SOCKET) {
+						LOG(TRACE) << "YawVRUdpClient::_udpClientThreadFunc: Connecting to YawVR on " << YAWVR_TCP_IP << ":" << YAWVR_TCP_PORT << " ...";
+						tcpSockfd = socket(AF_INET, SOCK_STREAM, 0);
+						if (tcpSockfd == INVALID_SOCKET) {
+							int err = WSAGetLastError();
+							throw std::runtime_error(boost::str(boost::format("Could not connect to YawVR : Error code %d.") % err));
+						}
+						LOG(DEBUG) << "YawVRUdpClient::_udpClientThreadFunc: TCP socket created, connecting ...";
+						sockAddr.sin_family = AF_INET;
+						sockAddr.sin_port = htons(YAWVR_TCP_PORT);
+						sockAddr.sin_addr.s_addr = inet_addr(YAWVR_TCP_IP);
+//						InetPton(AF_INET, (PCWSTR)(YAWVR_TCP_IP), &sockAddr.sin_addr.s_addr);
+						if (connect(tcpSockfd, (SOCKADDR*)&sockAddr, sizeof(sockAddr)) != 0) {
+							int err = WSAGetLastError();
+							throw std::runtime_error(boost::str(boost::format("Could not connect to YawVR : Error code %d.") % err));
+						}
+						LOG(TRACE) << "YawVRUdpClient::_udpClientThreadFunc: Requesting checkin on UDP port : " << YAWVR_UDP_PORT << " ...";
+						char yawVRUDPPortIntStr[sizeof(__int32)];
+						//*((__int32*)yawVRUDPPortIntStr) = (__int32)YAWVR_UDP_PORT;
+						__int32 yawVRUDPPort = YAWVR_UDP_PORT;
+						BYTE *yawVRUDPPortBytesArray = (BYTE*)&yawVRUDPPort;
+						std::reverse_copy(yawVRUDPPortBytesArray, yawVRUDPPortBytesArray + sizeof yawVRUDPPort, yawVRUDPPortIntStr);
+						std::string yawVRUDPPortCheckinTCPPacketRequest;
+						yawVRUDPPortCheckinTCPPacketRequest.resize(1 + sizeof(__int32) + std::string(YAWVR_UDP_PORT_CHECKIN_GAME_NAME).length() + 1, 0);
+						yawVRUDPPortCheckinTCPPacketRequest[0] = 0x30;
+						yawVRUDPPortCheckinTCPPacketRequest.replace(yawVRUDPPortCheckinTCPPacketRequest.begin() + 1, yawVRUDPPortCheckinTCPPacketRequest.begin() + 1 + sizeof(__int32), yawVRUDPPortIntStr, sizeof(__int32));
+						yawVRUDPPortCheckinTCPPacketRequest.replace(yawVRUDPPortCheckinTCPPacketRequest.begin() + 1 + sizeof(__int32), yawVRUDPPortCheckinTCPPacketRequest.begin() + 1 + sizeof(__int32) + std::string(YAWVR_UDP_PORT_CHECKIN_GAME_NAME).length(), std::string(YAWVR_UDP_PORT_CHECKIN_GAME_NAME));
+						send(tcpSockfd, yawVRUDPPortCheckinTCPPacketRequest.data(), (int)yawVRUDPPortCheckinTCPPacketRequest.length() + 1, 0);
+						if (tcpSockfd == INVALID_SOCKET) {
+							int err = WSAGetLastError();
+							if (err != WSAETIMEDOUT)
+								throw std::runtime_error(boost::str(boost::format("Could not send checkin request to YawVR: Error code %d.") % err));
+						}
+						rcvSize = recv(tcpSockfd, rcvBuffer, sizeof(rcvBuffer) - 1, 0);
+						if (rcvSize != SOCKET_ERROR) {
+							rcvBuffer[rcvSize] = '\0';
+							LOG(DEBUG) << "YawVRUdpClient::_udpClientThreadFunc: received packet : " << rcvBuffer;
+						}
+						else {
+							int err = WSAGetLastError();
+							if (err != WSAETIMEDOUT)
+								throw std::runtime_error(boost::str(boost::format("Could not receive from YawVR: Error code %d.") % err));
+						}
+					}
+
+					LOG(TRACE) << "YawVRUdpClient::_udpClientThreadFunc: Receiving YawVR on 0.0.0.0:" << YAWVR_UDP_PORT << " ...";
 					sockfd = socket(AF_INET, SOCK_DGRAM, 0);
 					if (sockfd == INVALID_SOCKET) {
 						int err = WSAGetLastError();
-						throw std::runtime_error(boost::str(boost::format("Could not connect to YawVR : Error code %d.") % err));
+						throw std::runtime_error(boost::str(boost::format("Could not create socket to received from YawVR : Error code %d.") % err));
 					}
-					LOG(DEBUG) << "YawVRUdpClient::_udpClientThreadFunc: Socket created.";
+					LOG(DEBUG) << "YawVRUdpClient::_udpClientThreadFunc: UDP socket created.";
 					struct timeval readTimeout;
 					readTimeout.tv_sec = 100;
 					readTimeout.tv_usec = 0;
@@ -119,8 +181,12 @@ void YawVRUdpClient::_udpClientThreadFunc(YawVRUdpClient* _this) {
 					if (rcvSize != SOCKET_ERROR) {
 						rcvBuffer[rcvSize] = '\0';
 						try {
+							std::lock_guard<std::mutex> guard(_this->_mutex);
 							if (parsePacket(rcvBuffer, _this->m_lastPacket)) {
-								LOG(DEBUG) << "YawVRUdpClient::_udpClientThreadFunc: received packet : " << _this->m_lastPacket.getString();
+								if (boost::posix_time::microsec_clock::universal_time() > _this->m_lastLogTime + boost::posix_time::milliseconds(1000)) {
+									_this->m_lastLogTime = boost::posix_time::microsec_clock::universal_time();
+									LOG(DEBUG) << "YawVRUdpClient::_udpClientThreadFunc: received packet : " << _this->m_lastPacket.getString();
+								}
 							}
 							else {
 								LOG(ERROR) << "YawVRUdpClient::_udpClientThreadFunc: could not parse received packet : " << rcvBuffer;
@@ -140,6 +206,10 @@ void YawVRUdpClient::_udpClientThreadFunc(YawVRUdpClient* _this) {
 					closesocket(sockfd);
 					sockfd = INVALID_SOCKET;
 				}
+				if (tcpSockfd != INVALID_SOCKET) {
+					closesocket(tcpSockfd);
+					tcpSockfd = INVALID_SOCKET;
+				}
 				LOG(ERROR) << "YawVRUdpClient::_udpClientThreadFunc: Exception caught in YawVR UDP client receive loop !\n" << ex.what() << "\nNew attempt in " << YAWVR_CNX_ATTEMPT_DELAY_SEC << " seconds ...";
 				_this->m_nextConnectionAttemptTime = boost::posix_time::microsec_clock::universal_time() + boost::posix_time::milliseconds(YAWVR_CNX_ATTEMPT_DELAY_SEC*1000);
 			}
@@ -151,6 +221,10 @@ void YawVRUdpClient::_udpClientThreadFunc(YawVRUdpClient* _this) {
 			closesocket(sockfd);
 			sockfd = INVALID_SOCKET;
 		}
+		if (tcpSockfd != INVALID_SOCKET) {
+			closesocket(tcpSockfd);
+			tcpSockfd = INVALID_SOCKET;
+		}
 	} catch (std::exception& ex) {
 		LOG(ERROR) << "YawVRUdpClient::_udpClientThreadFunc: Exception caught in YawVR UDP client thread: " << ex.what();
 	}
@@ -161,3 +235,4 @@ void YawVRUdpClient::_udpClientThreadFunc(YawVRUdpClient* _this) {
 
 } // end namespace driver
 } // end namespace vrinputemulator
+#endif

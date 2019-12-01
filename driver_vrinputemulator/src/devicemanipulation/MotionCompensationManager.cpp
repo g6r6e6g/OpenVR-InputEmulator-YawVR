@@ -8,10 +8,9 @@
 namespace vrinputemulator {
 namespace driver {
 
-// YawVR
-vr::HmdVector3d_t MotionCompensationManager::yawVRShellFront2Pivot = { 0.0, -0.1, +0.3 }; // shell pivot should be 10cm below, 30cm behind of the front of it
-vr::HmdVector3d_t MotionCompensationManager::yawVRShellPivot2Hmd = { 0.0, 0.55, 0.0 }; // hmd should be 55cm above of the shell pivot
-
+#ifdef YAWVR
+vr::HmdVector3d_t MotionCompensationManager::ctrlr2YawVRShellPivot = { 0.0, -0.10, 0.0 }; // YawVR shell pivot should be 10cm below the controller
+#endif
 
 void MotionCompensationManager::enableMotionCompensation(bool enable) {
 	_motionCompensationZeroRefTimeout = 0;
@@ -88,20 +87,47 @@ bool MotionCompensationManager::_isMotionCompensationZeroPoseValid() {
 void MotionCompensationManager::_setMotionCompensationZeroPose(const vr::DriverPose_t& pose) {
 	// convert pose from driver space to app space
 	auto tmpConj = vrmath::quaternionConjugate(pose.qWorldFromDriverRotation);
+#ifdef YAWVR
+	vr::HmdVector3d_t z = vr::HmdVector3d_t{ pose.vecPosition[0], pose.vecPosition[1], pose.vecPosition[2] } + ctrlr2YawVRShellPivot;
+	_motionCompensationZeroPos = vrmath::quaternionRotateVector(pose.qWorldFromDriverRotation, tmpConj, z.v, true) - pose.vecWorldFromDriverTranslation;
+#else
 	_motionCompensationZeroPos = vrmath::quaternionRotateVector(pose.qWorldFromDriverRotation, tmpConj, pose.vecPosition, true) - pose.vecWorldFromDriverTranslation;
+#endif
 	_motionCompensationZeroRot = tmpConj * pose.qRotation;
+#ifdef YAWVR
 	LOG(TRACE) << "MotionCompensationManager::_setMotionCompensationZeroPose: _motionCompensationZeroPos:(" << _motionCompensationZeroPos.v[0] << ", " << _motionCompensationZeroPos.v[1] << ", " << _motionCompensationZeroPos.v[2] << "), _motionCompensationZeroRot:(" << _motionCompensationZeroRot.x << ", " << _motionCompensationZeroRot.y << ", " << _motionCompensationZeroRot.z << ", " << _motionCompensationZeroRot.w << ")";
+#endif
 
 	_motionCompensationZeroPoseValid = true;
 }
 
+#ifdef YAWVR
 void MotionCompensationManager::_setMotionCompensationYawVRZeroPose(const vr::HmdQuaternion_t& yawVRSimRotation, DeviceManipulationHandle* deviceInfo) {
-	_motionCompensationZeroPos = _motionCompensationZeroPos + yawVRShellFront2Pivot; // shell pivot should be 10cm below, 30cm behind
+	//_motionCompensationZeroPos = _motionCompensationZeroPos + ctrlr2YawVRShellPivot;
 	_motionCompensationYawVRZeroRot = yawVRSimRotation;
-	LOG(TRACE) << "MotionCompensationManager::_setMotionCompensationYawVRZeroPose: (ETrackedDeviceClass:" << deviceInfo->deviceClass() << ", openvrId:" << deviceInfo->openvrId() << ") _motionCompensationYawVRZeroRot:(" << _motionCompensationYawVRZeroRot.x << ", " << _motionCompensationYawVRZeroRot.y << ", " << _motionCompensationYawVRZeroRot.z << ", " << _motionCompensationYawVRZeroRot.w << ")";
+	//double forward[3] = { 0.0, 0.0, -1.0 };
+	//double up[3] = { 0.0, +1.0, 0.0 };
+	//double right[3] = { +1.0, 0.0, 0.0 };
+	//auto tmpConj = vrmath::quaternionConjugate(_motionCompensationZeroRot);
+	//vr::HmdVector3d_t f = vrmath::quaternionRotateVector(_motionCompensationZeroRot, tmpConj, forward, true);
+	//vr::HmdVector3d_t u = vrmath::quaternionRotateVector(_motionCompensationZeroRot, tmpConj, up, true);
+	//vr::HmdVector3d_t r = vrmath::quaternionRotateVector(_motionCompensationZeroRot, tmpConj, right, true);
+	//LOG(TRACE) << "MotionCompensationManager::_setMotionCompensationYawVRZeroPose: (ETrackedDeviceClass:" << deviceInfo->deviceClass() << ", openvrId:" << deviceInfo->openvrId() << ") forward:(" << f.v[0] << ", " << f.v[1] << ", " << f.v[2] << ")";
+	//LOG(TRACE) << "MotionCompensationManager::_setMotionCompensationYawVRZeroPose: (ETrackedDeviceClass:" << deviceInfo->deviceClass() << ", openvrId:" << deviceInfo->openvrId() << ") up:(" << u.v[0] << ", " << u.v[1] << ", " << u.v[2] << ")";
+	//LOG(TRACE) << "MotionCompensationManager::_setMotionCompensationYawVRZeroPose: (ETrackedDeviceClass:" << deviceInfo->deviceClass() << ", openvrId:" << deviceInfo->openvrId() << ") right:(" << r.v[0] << ", " << r.v[1] << ", " << r.v[2] << ")";
+	//u = vr::HmdVector3d_t{ up[0], up[1], up[2] };
+	//f.v[1] = 0.0;
+	//f = vrmath::vectorNormalize(f);
+	//r = f | u;
+	//LOG(TRACE) << "MotionCompensationManager::_setMotionCompensationYawVRZeroPose: (ETrackedDeviceClass:" << deviceInfo->deviceClass() << ", openvrId:" << deviceInfo->openvrId() << ") forward:(" << f.v[0] << ", " << f.v[1] << ", " << f.v[2] << ")";
+	//LOG(TRACE) << "MotionCompensationManager::_setMotionCompensationYawVRZeroPose: (ETrackedDeviceClass:" << deviceInfo->deviceClass() << ", openvrId:" << deviceInfo->openvrId() << ") up:(" << u.v[0] << ", " << u.v[1] << ", " << u.v[2] << ")";
+	//LOG(TRACE) << "MotionCompensationManager::_setMotionCompensationYawVRZeroPose: (ETrackedDeviceClass:" << deviceInfo->deviceClass() << ", openvrId:" << deviceInfo->openvrId() << ") right:(" << r.v[0] << ", " << r.v[1] << ", " << r.v[2] << ")";
+	//LOG(TRACE) << "MotionCompensationManager::_setMotionCompensationYawVRZeroPose: (ETrackedDeviceClass:" << deviceInfo->deviceClass() << ", openvrId:" << deviceInfo->openvrId() << ") _motionCompensationYawVRZeroRot:(" << _motionCompensationYawVRZeroRot.x << ", " << _motionCompensationYawVRZeroRot.y << ", " << _motionCompensationYawVRZeroRot.z << ", " << _motionCompensationYawVRZeroRot.w << ")";
 
-	_motionCompensationZeroPoseValid = true;
+	//_motionCompensationZeroPoseValid = true;
+	//_motionCompensationRefPoseValid = true;
 }
+#endif
 
 void MotionCompensationManager::_updateMotionCompensationRefPose(const vr::DriverPose_t& pose) {
 	// convert pose from driver space to app space
@@ -112,7 +138,9 @@ void MotionCompensationManager::_updateMotionCompensationRefPose(const vr::Drive
 	// calculate orientation difference and its inverse
 	_motionCompensationRotDiff = poseWorldRot * vrmath::quaternionConjugate(_motionCompensationZeroRot);
 	_motionCompensationRotDiffInv = vrmath::quaternionConjugate(_motionCompensationRotDiff);
+#ifdef YAWVR
 	//LOG(TRACE) << "MotionCompensationManager::_updateMotionCompensationRefPose: _motionCompensationRotDiff:(" << _motionCompensationRotDiff.x << ", " << _motionCompensationRotDiff.y << ", " << _motionCompensationRotDiff.z << ", " << _motionCompensationRotDiff.w << ")";
+#endif
 
 	// Convert velocity and acceleration values into app space and undo device rotation
 	if (_motionCompensationVelAccMode == MotionCompensationVelAccMode::SubstractMotionRef) {
@@ -128,16 +156,22 @@ void MotionCompensationManager::_updateMotionCompensationRefPose(const vr::Drive
 	_motionCompensationRefPoseValid = true;
 }
 
+#ifdef YAWVR
 void MotionCompensationManager::_updateMotionCompensationYawVRRefPose(const vr::HmdQuaternion_t& yawVRSimRotation, DeviceManipulationHandle* deviceInfo) {
-	_motionCompensationRefPos = _motionCompensationZeroPos;
+	//_motionCompensationRefPos = _motionCompensationZeroPos; // updating _motionCompensationRefPos here caused glitches ! don t know why.
 
 	// calculate orientation difference and its inverse
+#if RIFT
 	_motionCompensationYawVRRotDiff = yawVRSimRotation * vrmath::quaternionConjugate(_motionCompensationYawVRZeroRot);
+#elif INDEX
+	_motionCompensationYawVRRotDiff = (_motionCompensationZeroRot * (vrmath::quaternionConjugate(_motionCompensationYawVRZeroRot) * yawVRSimRotation)) * vrmath::quaternionConjugate(_motionCompensationZeroRot);
+#endif
 	_motionCompensationYawVRRotDiffInv = vrmath::quaternionConjugate(_motionCompensationYawVRRotDiff);
 	//LOG(TRACE) << "MotionCompensationManager::_updateMotionCompensationYawVRRefPose: (ETrackedDeviceClass:" << deviceInfo->deviceClass() << ", openvrId:" << deviceInfo->openvrId() << ") _motionCompensationYawVRRotDiff:(" << _motionCompensationYawVRRotDiff.x << ", " << _motionCompensationYawVRRotDiff.y << ", " << _motionCompensationYawVRRotDiff.z << ", " << _motionCompensationYawVRRotDiff.w << ")";
 
-	_motionCompensationRefPoseValid = true;
+	//_motionCompensationRefPoseValid = true;
 }
+#endif
 
 bool MotionCompensationManager::_applyMotionCompensation(vr::DriverPose_t& pose, DeviceManipulationHandle* deviceInfo) {
 	if (_motionCompensationEnabled && _motionCompensationZeroPoseValid && _motionCompensationRefPoseValid) {
@@ -145,11 +179,16 @@ bool MotionCompensationManager::_applyMotionCompensation(vr::DriverPose_t& pose,
 		vr::HmdQuaternion_t tmpConj = vrmath::quaternionConjugate(pose.qWorldFromDriverRotation);
 		auto poseWorldPos = vrmath::quaternionRotateVector(pose.qWorldFromDriverRotation, tmpConj, pose.vecPosition, true) - pose.vecWorldFromDriverTranslation;
 		auto poseWorldRot = tmpConj * pose.qRotation;
+		//if (deviceInfo->deviceClass() == vr::ETrackedDeviceClass::TrackedDeviceClass_HMD) {
+		//	LOG(TRACE) << "MotionCompensationManager::_applyMotionCompensation: (ETrackedDeviceClass:" << deviceInfo->deviceClass() << ", openvrId:" << deviceInfo->openvrId() << ") poseWorldPos:(" << poseWorldPos.v[0] << ", " << poseWorldPos.v[1] << ", " << poseWorldPos.v[2] << "), poseWorldRot:(" << poseWorldRot.x << ", " << poseWorldRot.y << ", " << poseWorldRot.z << ", " << poseWorldRot.w << ")";
+		//}
 
 		// do motion compensation
 		auto compensatedPoseWorldPos = _motionCompensationZeroPos + vrmath::quaternionRotateVector(_motionCompensationRotDiff, _motionCompensationRotDiffInv, poseWorldPos - _motionCompensationRefPos, true);
 		auto compensatedPoseWorldRot = _motionCompensationRotDiffInv * poseWorldRot;
+#ifdef YAWVR
 		//LOG(TRACE) << "MotionCompensationManager::_applyMotionCompensation: (ETrackedDeviceClass:" << deviceInfo->deviceClass() << ", openvrId:" << deviceInfo->openvrId() << ") compensatedPoseWorldPos:(" << compensatedPoseWorldPos.v[0] << ", " << compensatedPoseWorldPos.v[1] << ", " << compensatedPoseWorldPos.v[2] << "), compensatedPoseWorldRot:(" << compensatedPoseWorldRot.x << ", " << compensatedPoseWorldRot.y << ", " << compensatedPoseWorldRot.z << ", " << compensatedPoseWorldRot.w << ")";
+#endif
 
 		// Velocity / Acceleration Compensation
 		vr::HmdVector3d_t compensatedPoseWorldVel;
@@ -326,17 +365,21 @@ bool MotionCompensationManager::_applyMotionCompensation(vr::DriverPose_t& pose,
 	}
 }
 
+#ifdef YAWVR
 bool MotionCompensationManager::_applyMotionCompensationYawVR(vr::DriverPose_t& pose, const vr::HmdQuaternion_t& yawVRSimRotation, DeviceManipulationHandle* deviceInfo) {
 	if (_motionCompensationEnabled && _motionCompensationZeroPoseValid && _motionCompensationRefPoseValid) {
 		// convert pose from driver space to app space
 		vr::HmdQuaternion_t tmpConj = vrmath::quaternionConjugate(pose.qWorldFromDriverRotation);
 		auto poseWorldPos = vrmath::quaternionRotateVector(pose.qWorldFromDriverRotation, tmpConj, pose.vecPosition, true) - pose.vecWorldFromDriverTranslation;
 		auto poseWorldRot = tmpConj * pose.qRotation;
+		//if (deviceInfo->deviceClass() == vr::ETrackedDeviceClass::TrackedDeviceClass_HMD) {
+		//	LOG(TRACE) << "MotionCompensationManager::_applyMotionCompensationYawVR: (ETrackedDeviceClass:" << deviceInfo->deviceClass() << ", openvrId:" << deviceInfo->openvrId() << ") poseWorldPos:(" << poseWorldPos.v[0] << ", " << poseWorldPos.v[1] << ", " << poseWorldPos.v[2] << "), poseWorldRot:(" << poseWorldRot.x << ", " << poseWorldRot.y << ", " << poseWorldRot.z << ", " << poseWorldRot.w << ")";
+		//}
 
 		// do motion compensation
 		//auto compensatedPoseWorldPos = _motionCompensationZeroPos + vrmath::quaternionRotateVector(_motionCompensationRotDiff, _motionCompensationRotDiffInv, poseWorldPos - _motionCompensationRefPos, true);
 		//auto compensatedPoseWorldRot = _motionCompensationRotDiffInv * poseWorldRot;
-		auto compensatedPoseWorldPos = _motionCompensationZeroPos + vrmath::quaternionRotateVector(_motionCompensationYawVRRotDiff, _motionCompensationYawVRRotDiffInv, poseWorldPos - _motionCompensationRefPos, true);
+		auto compensatedPoseWorldPos = _motionCompensationZeroPos + vrmath::quaternionRotateVector(_motionCompensationYawVRRotDiff, _motionCompensationYawVRRotDiffInv, poseWorldPos - _motionCompensationZeroPos, true);
 		auto compensatedPoseWorldRot = _motionCompensationYawVRRotDiffInv * poseWorldRot;
 		//LOG(TRACE) << "MotionCompensationManager::_applyMotionCompensationYawVR: (ETrackedDeviceClass:" << deviceInfo->deviceClass() << ", openvrId:" << deviceInfo->openvrId() << ") compensatedPoseWorldPos:(" << compensatedPoseWorldPos.v[0] << ", " << compensatedPoseWorldPos.v[1] << ", " << compensatedPoseWorldPos.v[2] << "), compensatedPoseWorldRot:(" << compensatedPoseWorldRot.x << ", " << compensatedPoseWorldRot.y << ", " << compensatedPoseWorldRot.z << ", " << compensatedPoseWorldRot.w << ")";
 		if (deviceInfo->deviceClass() == vr::ETrackedDeviceClass::TrackedDeviceClass_HMD) {
@@ -533,6 +576,7 @@ bool MotionCompensationManager::_applyMotionCompensationYawVR(vr::DriverPose_t& 
 		return true;
 	}
 }
+#endif
 
 void MotionCompensationManager::runFrame() {
 	if (_motionCompensationEnabled && _motionCompensationStatus == MotionCompensationStatus::WaitingForZeroRef) {
@@ -543,6 +587,7 @@ void MotionCompensationManager::runFrame() {
 		}
 	}
 
+#ifdef YAWVR
 	auto serverDriver = ServerDriver::getInstance();
 	if (serverDriver) {
 		YawVRUnityTesterUdpClient &yawVRUnityTesterUdpClient = serverDriver->yawVRUnityTesterUdpServer();
@@ -553,6 +598,7 @@ void MotionCompensationManager::runFrame() {
 		yawVRUnityTesterPacket->mcRotDiff = _motionCompensationRotDiff;
 		yawVRUnityTesterUdpClient.unlockPacket();
 	}
+#endif
 }
 
 
