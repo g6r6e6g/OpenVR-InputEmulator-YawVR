@@ -42,13 +42,13 @@ public:
 	void setMotionCompensationMovingAverageWindow(unsigned window);
 	void _disableMotionCompensationOnAllDevices();
 	bool _isMotionCompensationZeroPoseValid();
+#ifdef YAWVR
+	void _setMotionCompensationZeroPose(const vr::DriverPose_t& pose, const vr::HmdQuaternion_t& yawVRSimRotation, DeviceManipulationHandle* deviceInfo);
+	bool _applyMotionCompensation(vr::DriverPose_t& pose, const vr::HmdQuaternion_t& yawVRSimRotation, DeviceManipulationHandle* deviceInfo);
+#else
 	void _setMotionCompensationZeroPose(const vr::DriverPose_t& pose);
 	void _updateMotionCompensationRefPose(const vr::DriverPose_t& pose);
 	bool _applyMotionCompensation(vr::DriverPose_t& pose, DeviceManipulationHandle* deviceInfo);
-#ifdef YAWVR
-	void _setMotionCompensationYawVRZeroPose(const vr::HmdQuaternion_t& yawVRSimRotation, DeviceManipulationHandle* deviceInfo);
-	void _updateMotionCompensationYawVRRefPose(const vr::HmdQuaternion_t& yawVRSimRotation, DeviceManipulationHandle* deviceInfo);
-	bool _applyMotionCompensationYawVR(vr::DriverPose_t& pose, const vr::HmdQuaternion_t& yawVRSimRotation, DeviceManipulationHandle* deviceInfo);
 #endif
 
 	void runFrame();

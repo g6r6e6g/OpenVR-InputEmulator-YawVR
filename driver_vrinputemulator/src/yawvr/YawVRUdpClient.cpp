@@ -12,8 +12,11 @@
 #include <boost/lexical_cast.hpp>
 #include "../driver/ServerDriver.h"
 
-//#define YAWVR_TCP_IP				"192.168.1.18" // Emulator, just launch the Unity Emulator app
+#if YAWVR_EMULATOR
+#define YAWVR_TCP_IP				"192.168.1.18" // Emulator, just launch the Unity Emulator app
+#else
 #define YAWVR_TCP_IP				"192.168.1.28" // Real YawVR device, start the Android appand start the device
+#endif
 #define YAWVR_TCP_PORT				50020
 #define YAWVR_UDP_PORT				28067
 #define YAWVR_UDP_PORT_CHECKIN_GAME_NAME	"YawVRMotionCompensation"
@@ -64,13 +67,8 @@ YawVRPacket_t YawVRUdpClient::getLastPacket() {
 
 vr::HmdQuaternion_t YawVRUdpClient::getSimRotation() {
 	std::lock_guard<std::mutex> guard(_mutex);
-#if RIFT
-	return vrmath::quaternionFromYawPitchRoll(-m_lastPacket.simYaw * M_PI / 180.0, m_lastPacket.simPitch * M_PI / 180.0, -m_lastPacket.simRoll * M_PI / 180.0);
-#elif INDEX
-	return vrmath::quaternionFromYawPitchRoll(-m_lastPacket.simRoll * M_PI / 180.0, m_lastPacket.simYaw * M_PI / 180.0, m_lastPacket.simPitch * M_PI / 180.0);
-#endif
+	return vrmath::quaternionFromYawPitchRoll(-m_lastPacket.simYaw * M_PI / 180.0, m_lastPacket.simRoll * M_PI / 180.0, m_lastPacket.simPitch * M_PI / 180.0);
 	// TODO check/tune/improve offset ctrlr/shell pivot into steamvr space,
-	// TODO avoid stop compensate if ctrlr tracking becomes invalid
 }
 
 bool YawVRUdpClient::parsePacket(const char *buffer, YawVRPacket_t& yawVRPacket) {

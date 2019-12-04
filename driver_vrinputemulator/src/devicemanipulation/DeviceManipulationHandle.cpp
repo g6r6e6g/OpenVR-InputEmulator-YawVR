@@ -125,19 +125,23 @@ bool DeviceManipulationHandle::handlePoseUpdate(uint32_t& unWhichDevice, vr::Dri
 		auto serverDriver = ServerDriver::getInstance();
 #endif
 		if (serverDriver) {
+#ifdef YAWVR
+			if (newPose.poseIsValid && newPose.result == vr::TrackingResult_Running_OK) {
+				if (!m_motionCompensationManager._isMotionCompensationZeroPoseValid()) {
+					m_motionCompensationManager._setMotionCompensationStatus(MotionCompensationStatus::Running);
+					m_motionCompensationManager._setMotionCompensationZeroPose(newPose, serverDriver->yawVRUdpClient().getSimRotation(), this);
+					m_deviceMode = 0;
+					serverDriver->sendReplySetMotionCompensationMode(true);
+				}
+			}
+#else
 			if (newPose.poseIsValid && newPose.result == vr::TrackingResult_Running_OK) {
 				m_motionCompensationManager._setMotionCompensationStatus(MotionCompensationStatus::Running);
 				if (!m_motionCompensationManager._isMotionCompensationZeroPoseValid()) {
 					m_motionCompensationManager._setMotionCompensationZeroPose(newPose);
-#ifdef YAWVR
-					m_motionCompensationManager._setMotionCompensationYawVRZeroPose(serverDriver->yawVRUdpClient().getSimRotation(), this);
-#endif
 					serverDriver->sendReplySetMotionCompensationMode(true);
 				} else {
 					m_motionCompensationManager._updateMotionCompensationRefPose(newPose);
-#ifdef YAWVR
-					m_motionCompensationManager._updateMotionCompensationYawVRRefPose(serverDriver->yawVRUdpClient().getSimRotation(), this);
-#endif
 				}
 			} else {
 				if (!m_motionCompensationManager._isMotionCompensationZeroPoseValid()) {
@@ -147,6 +151,7 @@ bool DeviceManipulationHandle::handlePoseUpdate(uint32_t& unWhichDevice, vr::Dri
 					m_motionCompensationManager._setMotionCompensationStatus(MotionCompensationStatus::MotionRefNotTracking);
 				}
 			}
+#endif
 		}
 		return true;
 
@@ -178,7 +183,7 @@ bool DeviceManipulationHandle::handlePoseUpdate(uint32_t& unWhichDevice, vr::Dri
 #ifdef YAWVR
 		auto serverDriver = ServerDriver::getInstance();
 		if (serverDriver) {
-			m_motionCompensationManager._applyMotionCompensationYawVR(newPose, serverDriver->yawVRUdpClient().getSimRotation(), this);
+			m_motionCompensationManager._applyMotionCompensation(newPose, serverDriver->yawVRUdpClient().getSimRotation(), this);
 		}
 #else
 		m_motionCompensationManager._applyMotionCompensation(newPose, this);
@@ -1464,6 +1469,9 @@ int DeviceManipulationHandle::setFakeDisconnectedMode() {
 
 int DeviceManipulationHandle::_disableOldMode(int newMode) {
 	if (m_deviceMode != newMode) {
+#ifdef YAWVR
+		LOG(TRACE) << "DeviceManipulationHandle::_disableOldMode(" << newMode << ") m_deviceMode:" << m_deviceMode;
+#endif
 		if (m_deviceMode == 5) {
 			auto serverDriver = ServerDriver::getInstance();
 			if (serverDriver) {
