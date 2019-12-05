@@ -875,6 +875,8 @@ Delete $INSTDIR\res\qml\mainwidget.qml
 Delete $INSTDIR\res\qml\mainwidget.qmlc
 Delete $INSTDIR\res\qml\MotionCompensationPage.qml
 Delete $INSTDIR\res\qml\MotionCompensationPage.qmlc
+Delete $INSTDIR\res\qml\YawSimulatorPage.qml
+Delete $INSTDIR\res\qml\YawSimulatorPage.qmlc
 Delete $INSTDIR\res\qml\MyComboBox.qml
 Delete $INSTDIR\res\qml\MyComboBox.qmlc
 Delete $INSTDIR\res\qml\MyDialogOkCancelPopup.qml

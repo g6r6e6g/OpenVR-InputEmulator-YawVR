@@ -68,7 +68,6 @@ YawVRPacket_t YawVRUdpClient::getLastPacket() {
 vr::HmdQuaternion_t YawVRUdpClient::getSimRotation() {
 	std::lock_guard<std::mutex> guard(_mutex);
 	return vrmath::quaternionFromYawPitchRoll(-m_lastPacket.simYaw * M_PI / 180.0, m_lastPacket.simRoll * M_PI / 180.0, m_lastPacket.simPitch * M_PI / 180.0);
-	// TODO check/tune/improve offset ctrlr/shell pivot into steamvr space,
 }
 
 bool YawVRUdpClient::parsePacket(const char *buffer, YawVRPacket_t& yawVRPacket) {

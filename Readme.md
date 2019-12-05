@@ -27,6 +27,15 @@ There is also a client-side API which other programs can use to communicate with
 
 This is a work-in-progress and may contain bugs.
 
+# g6r6e6g notes :
+
+![Yaw Simulator Settings Page](docs/screenshots/YawSimulatorPage.png)
+
+TODO debug sometimes after motion compensation apply on 1 ctrlr, zero pose seems totally shifted,
+     workaround consists in changing Vel/Acc Compensation Mode from Disabled to Set Zero, Apply,
+	 then restore the Disabled Vel/Acc Compensation Mode
+TODO check/tune/improve offset ctrlr/shell pivot into steamvr space
+
 # Usage
 
 ## Installer
