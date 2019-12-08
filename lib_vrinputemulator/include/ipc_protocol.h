@@ -50,6 +50,9 @@ enum class RequestType : uint32_t {
 	DeviceManipulation_FakeDisconnectedMode,
 	DeviceManipulation_TriggerHapticPulse,
 	DeviceManipulation_SetMotionCompensationProperties,
+#ifdef YAWVR
+	DeviceManipulation_SetYawSimulatorProperties,
+#endif
 
 	InputRemapping_SetDigitalRemapping,
 	InputRemapping_GetDigitalRemapping,
@@ -299,6 +302,22 @@ struct Request_DeviceManipulation_SetMotionCompensationProperties {
 	unsigned movingAverageWindow;
 };
 
+#ifdef YAWVR
+struct Request_DeviceManipulation_SetYawSimulatorProperties {
+	uint32_t clientId;
+	uint32_t messageId; // Used to associate with Reply
+	uint32_t deviceId;
+	uint32_t enableYawBasedMotionCompensation; // 0 .. don't change, 1 .. enable, 2 .. disable
+	char yawSimulatorIPAddress[16];
+	uint32_t offsetOperation; // 0 .. set, 1 .. add
+	// Yaw simulator shell pivot from calibration device offsets
+	bool yawShellPivotFromCalibrationDeviceRotationOffsetValid;
+	vr::HmdQuaternion_t yawShellPivotFromCalibrationDeviceRotationOffset;
+	bool yawShellPivotFromCalibrationDeviceTranslationOffsetValid;
+	vr::HmdVector3d_t yawShellPivotFromCalibrationDeviceTranslationOffset;
+};
+#endif
+
 struct Request_InputRemapping_SetDigitalRemapping {
 	uint32_t clientId;
 	uint32_t messageId; // Used to associate with Reply
@@ -373,6 +392,9 @@ struct Request {
 		Request_DeviceManipulation_MotionCompensationMode dm_MotionCompensationMode;
 		Request_DeviceManipulation_TriggerHapticPulse dm_triggerHapticPulse;
 		Request_DeviceManipulation_SetMotionCompensationProperties dm_SetMotionCompensationProperties;
+#ifdef YAWVR
+		Request_DeviceManipulation_SetYawSimulatorProperties dm_SetYawSimulatorProperties;
+#endif
 		Request_InputRemapping_SetDigitalRemapping ir_SetDigitalRemapping;
 		Request_InputRemapping_GetDigitalRemapping ir_GetDigitalRemapping;
 		Request_InputRemapping_SetAnalogRemapping ir_SetAnalogRemapping;

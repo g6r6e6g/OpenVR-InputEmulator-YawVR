@@ -893,6 +893,57 @@ void IpcShmCommunicator::_ipcThreadFunc(IpcShmCommunicator* _this, ServerDriver 
 							}
 							break;
 
+#ifdef YAWVR
+						case ipc::RequestType::DeviceManipulation_SetYawSimulatorProperties:
+						{
+							ipc::Reply resp(ipc::ReplyType::GenericReply);
+							resp.messageId = message.msg.dm_SetYawSimulatorProperties.messageId;
+							if (message.msg.dm_SetYawSimulatorProperties.deviceId >= vr::k_unMaxTrackedDeviceCount) {
+								resp.status = ipc::ReplyStatus::InvalidId;
+							}
+							else {
+								DeviceManipulationHandle* info = driver->getDeviceManipulationHandleById(message.msg.dm_SetYawSimulatorProperties.deviceId);
+								if (!info) {
+									resp.status = ipc::ReplyStatus::NotFound;
+								}
+								else {
+									resp.status = ipc::ReplyStatus::Ok;
+									if (message.msg.dm_SetYawSimulatorProperties.enableYawBasedMotionCompensation > 0) {
+										info->enableYawBasedMotionCompensation(message.msg.dm_SetYawSimulatorProperties.enableYawBasedMotionCompensation == 1 ? true : false);
+									}
+									if (message.msg.dm_SetYawSimulatorProperties.yawSimulatorIPAddress[0] != 0) {
+										info->setYawSimulatorIPAddress(message.msg.dm_SetYawSimulatorProperties.yawSimulatorIPAddress);
+									}
+									switch (message.msg.dm_SetYawSimulatorProperties.offsetOperation) {
+									case 0:
+										if (message.msg.dm_SetYawSimulatorProperties.yawShellPivotFromCalibrationDeviceRotationOffsetValid) {
+											info->yawShellPivotFromCalibrationDeviceRotationOffset() = message.msg.dm_SetYawSimulatorProperties.yawShellPivotFromCalibrationDeviceRotationOffset;
+										}
+										if (message.msg.dm_SetYawSimulatorProperties.yawShellPivotFromCalibrationDeviceTranslationOffsetValid) {
+											info->yawShellPivotFromCalibrationDeviceTranslationOffset() = message.msg.dm_SetYawSimulatorProperties.yawShellPivotFromCalibrationDeviceTranslationOffset;
+										}
+										break;
+									case 1:
+										if (message.msg.dm_SetYawSimulatorProperties.yawShellPivotFromCalibrationDeviceRotationOffsetValid) {
+											info->yawShellPivotFromCalibrationDeviceRotationOffset() = message.msg.dm_SetYawSimulatorProperties.yawShellPivotFromCalibrationDeviceRotationOffset * info->yawShellPivotFromCalibrationDeviceRotationOffset();
+										}
+										if (message.msg.dm_SetYawSimulatorProperties.yawShellPivotFromCalibrationDeviceTranslationOffsetValid) {
+											info->yawShellPivotFromCalibrationDeviceTranslationOffset() = info->yawShellPivotFromCalibrationDeviceTranslationOffset() + message.msg.dm_SetYawSimulatorProperties.yawShellPivotFromCalibrationDeviceTranslationOffset;
+										}
+										break;
+									}
+								}
+							}
+							if (resp.status != ipc::ReplyStatus::Ok) {
+								LOG(ERROR) << "Error while updating device pose offset: Error code " << (int)resp.status;
+							}
+							if (resp.messageId != 0) {
+								_this->sendReply(message.msg.dm_DeviceOffsets.clientId, resp);
+							}
+						}
+						break;
+#endif
+
 						case ipc::RequestType::InputRemapping_SetTouchpadEmulationFixEnabled: {
 							DeviceManipulationHandle::setTouchpadEmulationFixFlag(message.msg.ir_SetTouchPadEmulationFixEnabled.enable);
 						} break;

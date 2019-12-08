@@ -191,6 +191,13 @@ public:
 	void setMotionCompensationKalmanObservationNoise(double variance, bool modal = true);
 	void setMotionCompensationMovingAverageWindow(unsigned window, bool modal = true);
 
+#ifdef YAWVR
+	void enableYawBasedMotionCompensation(uint32_t deviceId, bool enable, bool modal = true);
+	void setYawSimulatorIPAddress(uint32_t deviceId, const std::string& ipAddress, bool modal = true);
+	void setYawShellPivotFromCalibrationDeviceRotationOffset(uint32_t deviceId, const vr::HmdQuaternion_t& value, bool modal = true);
+	void setYawShellPivotFromCalibrationDeviceTranslationOffset(uint32_t deviceId, const vr::HmdVector3d_t& value, bool modal = true);
+#endif
+
 	void triggerHapticPulse(uint32_t deviceId, uint32_t axisId, uint16_t durationMicroseconds, bool directMode, bool modal = true);
 
 	void setDigitalInputRemapping(uint32_t deviceId, uint32_t buttonId, const DigitalInputRemapping& remapping, bool modal = true);

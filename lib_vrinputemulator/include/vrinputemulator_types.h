@@ -49,6 +49,10 @@ namespace vrinputemulator {
 		vr::HmdVector3d_t driverFromHeadTranslationOffset;
 		vr::HmdQuaternion_t deviceRotationOffset;
 		vr::HmdVector3d_t deviceTranslationOffset;
+#ifdef YAWVR
+		vr::HmdQuaternion_t yawShellPivotFromCalibrationDeviceRotationOffset;
+		vr::HmdVector3d_t yawShellPivotFromCalibrationDeviceTranslationOffset;
+#endif
 	};
 
 
@@ -58,6 +62,9 @@ namespace vrinputemulator {
 		int deviceMode;
 		uint32_t refDeviceId;
 		bool offsetsEnabled;
+#ifdef YAWVR
+		bool yawBasedMotionCompensationEnabled;
+#endif
 		bool redirectSuspended;
 	};
 

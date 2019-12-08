@@ -122,9 +122,9 @@ MyStackViewPage {
                 model: []
                 onCurrentIndexChanged: {
                     deviceModeSelectionComboBox.currentIndex = 0
-					if (currentIndex >= 0) {
-						DeviceManipulationTabController.updateDeviceInfo(currentIndex);
-						fetchDeviceInfo()
+                    if (currentIndex >= 0) {
+                        DeviceManipulationTabController.updateDeviceInfo(currentIndex);
+                        fetchDeviceInfo()
                     }
                 }
             }
@@ -321,7 +321,7 @@ MyStackViewPage {
                 onClicked: {
                     if (deviceSelectionComboBox.currentIndex >= 0) {
                         MyResources.playFocusChangedSound()
-						var res = mainView.push(yawSimulatorPage)
+                        var res = mainView.push(yawSimulatorPage)
                     }
                 }
             }
@@ -467,7 +467,7 @@ MyStackViewPage {
             deviceModeSelectionComboBox.enabled = false
             deviceModeApplyButton.enabled = false
             motionCompensationButton.enabled = false
-			yawSimulatorButton.enabled = false
+            yawSimulatorButton.enabled = false
             deviceManipulationOffsetButton.enabled = false
             deviceInputRemappingButton.enabled = false
             deviceRenderModelButton.enabled = false
@@ -480,7 +480,7 @@ MyStackViewPage {
             deviceRenderModelButton.enabled = true
             deviceInputRemappingButton.enabled = true
             motionCompensationButton.enabled = true
-			yawSimulatorButton.enabled = true
+            yawSimulatorButton.enabled = true
             deviceModeApplyButton.enabled = true
             deviceIdentifyButton.enabled = true
             deviceManipulationNewProfileButton.enabled = true

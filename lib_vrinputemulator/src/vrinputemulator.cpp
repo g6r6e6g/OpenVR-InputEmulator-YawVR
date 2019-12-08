@@ -760,7 +760,7 @@ void VRInputEmulator::enableDeviceButtonMapping(uint32_t deviceId, bool enable, 
 				_ipcPromiseMap.erase(messageId);
 			}
 			std::stringstream ss;
-			ss << "Error while enabling device offsets: ";
+			ss << "Error while enabling device button mapping: ";
 			if (resp.status == ipc::ReplyStatus::InvalidId) {
 				ss << "Invalid device id";
 				throw vrinputemulator_invalidid(ss.str());
@@ -806,7 +806,7 @@ void VRInputEmulator::addDeviceButtonMapping(uint32_t deviceId, vr::EVRButtonId 
 				_ipcPromiseMap.erase(messageId);
 			}
 			std::stringstream ss;
-			ss << "Error while enabling device offsets: ";
+			ss << "Error while adding device button mapping: ";
 			if (resp.status == ipc::ReplyStatus::InvalidId) {
 				ss << "Invalid device id";
 				throw vrinputemulator_invalidid(ss.str());
@@ -851,7 +851,7 @@ void VRInputEmulator::removeDeviceButtonMapping(uint32_t deviceId, vr::EVRButton
 				_ipcPromiseMap.erase(messageId);
 			}
 			std::stringstream ss;
-			ss << "Error while enabling device offsets: ";
+			ss << "Error while removing device button mapping: ";
 			if (resp.status == ipc::ReplyStatus::InvalidId) {
 				ss << "Invalid device id";
 				throw vrinputemulator_invalidid(ss.str());
@@ -895,7 +895,7 @@ void VRInputEmulator::removeAllDeviceButtonMappings(uint32_t deviceId, bool moda
 				_ipcPromiseMap.erase(messageId);
 			}
 			std::stringstream ss;
-			ss << "Error while enabling device offsets: ";
+			ss << "Error while removing all device button mappings: ";
 			if (resp.status == ipc::ReplyStatus::InvalidId) {
 				ss << "Invalid device id";
 				throw vrinputemulator_invalidid(ss.str());
@@ -935,7 +935,7 @@ void VRInputEmulator::getDeviceOffsets(uint32_t deviceId, DeviceOffsets & data) 
 			_ipcPromiseMap.erase(messageId);
 		}
 		std::stringstream ss;
-		ss << "Error while enabling device offsets: ";
+		ss << "Error while getting device offsets: ";
 		if (resp.status == ipc::ReplyStatus::Ok) {
 			memcpy(&data, &resp.msg.dm_deviceOffsets, sizeof(DeviceOffsets));
 		} else if (resp.status == ipc::ReplyStatus::InvalidId) {
@@ -1023,7 +1023,7 @@ void VRInputEmulator::setWorldFromDriverRotationOffset(uint32_t deviceId, const 
 				_ipcPromiseMap.erase(messageId);
 			}
 			std::stringstream ss;
-			ss << "Error while enabling device offsets: ";
+			ss << "Error while setting device offsets: ";
 			if (resp.status == ipc::ReplyStatus::InvalidId) {
 				ss << "Invalid device id";
 				throw vrinputemulator_invalidid(ss.str());
@@ -1067,7 +1067,7 @@ void VRInputEmulator::setWorldFromDriverTranslationOffset(uint32_t deviceId, con
 				_ipcPromiseMap.erase(messageId);
 			}
 			std::stringstream ss;
-			ss << "Error while enabling device offsets: ";
+			ss << "Error while setting device offsets: ";
 			if (resp.status == ipc::ReplyStatus::InvalidId) {
 				ss << "Invalid device id";
 				throw vrinputemulator_invalidid(ss.str());
@@ -1111,7 +1111,7 @@ void VRInputEmulator::setDriverFromHeadRotationOffset(uint32_t deviceId, const v
 				_ipcPromiseMap.erase(messageId);
 			}
 			std::stringstream ss;
-			ss << "Error while enabling device offsets: ";
+			ss << "Error while setting device offsets: ";
 			if (resp.status == ipc::ReplyStatus::InvalidId) {
 				ss << "Invalid device id";
 				throw vrinputemulator_invalidid(ss.str());
@@ -1155,7 +1155,7 @@ void VRInputEmulator::setDriverFromHeadTranslationOffset(uint32_t deviceId, cons
 				_ipcPromiseMap.erase(messageId);
 			}
 			std::stringstream ss;
-			ss << "Error while enabling device offsets: ";
+			ss << "Error while setting device offsets: ";
 			if (resp.status == ipc::ReplyStatus::InvalidId) {
 				ss << "Invalid device id";
 				throw vrinputemulator_invalidid(ss.str());
@@ -1199,7 +1199,7 @@ void VRInputEmulator::setDriverRotationOffset(uint32_t deviceId, const vr::HmdQu
 				_ipcPromiseMap.erase(messageId);
 			}
 			std::stringstream ss;
-			ss << "Error while enabling device offsets: ";
+			ss << "Error while setting device offsets: ";
 			if (resp.status == ipc::ReplyStatus::InvalidId) {
 				ss << "Invalid device id";
 				throw vrinputemulator_invalidid(ss.str());
@@ -1243,7 +1243,7 @@ void VRInputEmulator::setDriverTranslationOffset(uint32_t deviceId, const vr::Hm
 				_ipcPromiseMap.erase(messageId);
 			}
 			std::stringstream ss;
-			ss << "Error while enabling device offsets: ";
+			ss << "Error while setting device offsets: ";
 			if (resp.status == ipc::ReplyStatus::InvalidId) {
 				ss << "Invalid device id";
 				throw vrinputemulator_invalidid(ss.str());
@@ -1703,6 +1703,199 @@ void VRInputEmulator::setMotionCompensationMovingAverageWindow(unsigned window, 
 	}
 }
 
+#ifdef YAWVR
+void VRInputEmulator::enableYawBasedMotionCompensation(uint32_t deviceId, bool enable, bool modal) {
+	if (_ipcServerQueue) {
+		ipc::Request message(ipc::RequestType::DeviceManipulation_SetYawSimulatorProperties);
+		memset(&message.msg, 0, sizeof(message.msg));
+		message.msg.dm_SetYawSimulatorProperties.clientId = m_clientId;
+		message.msg.dm_SetYawSimulatorProperties.messageId = 0;
+		message.msg.dm_SetYawSimulatorProperties.deviceId = deviceId;
+		message.msg.dm_SetYawSimulatorProperties.enableYawBasedMotionCompensation = enable ? 1 : 2;
+		if (modal) {
+			uint32_t messageId = _ipcRandomDist(_ipcRandomDevice);
+			message.msg.dm_SetYawSimulatorProperties.messageId = messageId;
+			std::promise<ipc::Reply> respPromise;
+			auto respFuture = respPromise.get_future();
+			{
+				std::lock_guard<std::recursive_mutex> lock(_mutex);
+				_ipcPromiseMap.insert({ messageId, std::move(respPromise) });
+			}
+			_ipcServerQueue->send(&message, sizeof(ipc::Request), 0);
+			auto resp = respFuture.get();
+			{
+				std::lock_guard<std::recursive_mutex> lock(_mutex);
+				_ipcPromiseMap.erase(messageId);
+			}
+			std::stringstream ss;
+			ss << "Error while enabling Yaw based motion compensation: ";
+			if (resp.status == ipc::ReplyStatus::InvalidId) {
+				ss << "Invalid device id";
+				throw vrinputemulator_invalidid(ss.str());
+			}
+			else if (resp.status == ipc::ReplyStatus::NotFound) {
+				ss << "Device not found";
+				throw vrinputemulator_notfound(ss.str());
+			}
+			else if (resp.status != ipc::ReplyStatus::Ok) {
+				ss << "Error code " << (int)resp.status;
+				throw vrinputemulator_exception(ss.str());
+			}
+		}
+		else {
+			message.msg.dm_SetYawSimulatorProperties.messageId = 0;
+			_ipcServerQueue->send(&message, sizeof(ipc::Request), 0);
+		}
+	}
+	else {
+		throw vrinputemulator_connectionerror("No active connection.");
+	}
+}
+
+void VRInputEmulator::setYawSimulatorIPAddress(uint32_t deviceId, const std::string& ipAddress, bool modal) {
+	if (_ipcServerQueue) {
+		ipc::Request message(ipc::RequestType::DeviceManipulation_SetYawSimulatorProperties);
+		memset(&message.msg, 0, sizeof(message.msg));
+		message.msg.dm_SetYawSimulatorProperties.clientId = m_clientId;
+		message.msg.dm_SetYawSimulatorProperties.messageId = 0;
+		message.msg.dm_SetYawSimulatorProperties.deviceId = deviceId;
+		strncpy_s(message.msg.dm_SetYawSimulatorProperties.yawSimulatorIPAddress, ipAddress.c_str(), 15);
+		message.msg.dm_SetYawSimulatorProperties.yawSimulatorIPAddress[15] = '\0';
+		if (modal) {
+			uint32_t messageId = _ipcRandomDist(_ipcRandomDevice);
+			message.msg.dm_SetYawSimulatorProperties.messageId = messageId;
+			std::promise<ipc::Reply> respPromise;
+			auto respFuture = respPromise.get_future();
+			{
+				std::lock_guard<std::recursive_mutex> lock(_mutex);
+				_ipcPromiseMap.insert({ messageId, std::move(respPromise) });
+			}
+			_ipcServerQueue->send(&message, sizeof(ipc::Request), 0);
+			auto resp = respFuture.get();
+			{
+				std::lock_guard<std::recursive_mutex> lock(_mutex);
+				_ipcPromiseMap.erase(messageId);
+			}
+			std::stringstream ss;
+			ss << "Error while setting Yaw simulator properties: ";
+			if (resp.status == ipc::ReplyStatus::InvalidId) {
+				ss << "Invalid device id";
+				throw vrinputemulator_invalidid(ss.str());
+			}
+			else if (resp.status == ipc::ReplyStatus::NotFound) {
+				ss << "Device not found";
+				throw vrinputemulator_notfound(ss.str());
+			}
+			else if (resp.status != ipc::ReplyStatus::Ok) {
+				ss << "Error code " << (int)resp.status;
+				throw vrinputemulator_exception(ss.str());
+			}
+		}
+		else {
+			_ipcServerQueue->send(&message, sizeof(ipc::Request), 0);
+		}
+	}
+	else {
+		throw vrinputemulator_connectionerror("No active connection.");
+	}
+}
+
+void VRInputEmulator::setYawShellPivotFromCalibrationDeviceRotationOffset(uint32_t deviceId, const vr::HmdQuaternion_t& value, bool modal) {
+	if (_ipcServerQueue) {
+		ipc::Request message(ipc::RequestType::DeviceManipulation_SetYawSimulatorProperties);
+		memset(&message.msg, 0, sizeof(message.msg));
+		message.msg.dm_SetYawSimulatorProperties.clientId = m_clientId;
+		message.msg.dm_SetYawSimulatorProperties.messageId = 0;
+		message.msg.dm_SetYawSimulatorProperties.deviceId = deviceId;
+		message.msg.dm_SetYawSimulatorProperties.yawShellPivotFromCalibrationDeviceRotationOffsetValid = true;
+		message.msg.dm_SetYawSimulatorProperties.yawShellPivotFromCalibrationDeviceRotationOffset = value;
+		if (modal) {
+			uint32_t messageId = _ipcRandomDist(_ipcRandomDevice);
+			message.msg.dm_SetYawSimulatorProperties.messageId = messageId;
+			std::promise<ipc::Reply> respPromise;
+			auto respFuture = respPromise.get_future();
+			{
+				std::lock_guard<std::recursive_mutex> lock(_mutex);
+				_ipcPromiseMap.insert({ messageId, std::move(respPromise) });
+			}
+			_ipcServerQueue->send(&message, sizeof(ipc::Request), 0);
+			auto resp = respFuture.get();
+			{
+				std::lock_guard<std::recursive_mutex> lock(_mutex);
+				_ipcPromiseMap.erase(messageId);
+			}
+			std::stringstream ss;
+			ss << "Error while setting Yaw simulator/device offsets: ";
+			if (resp.status == ipc::ReplyStatus::InvalidId) {
+				ss << "Invalid device id";
+				throw vrinputemulator_invalidid(ss.str());
+			}
+			else if (resp.status == ipc::ReplyStatus::NotFound) {
+				ss << "Device not found";
+				throw vrinputemulator_notfound(ss.str());
+			}
+			else if (resp.status != ipc::ReplyStatus::Ok) {
+				ss << "Error code " << (int)resp.status;
+				throw vrinputemulator_exception(ss.str());
+			}
+		}
+		else {
+			_ipcServerQueue->send(&message, sizeof(ipc::Request), 0);
+		}
+	}
+	else {
+		throw vrinputemulator_connectionerror("No active connection.");
+	}
+}
+
+void VRInputEmulator::setYawShellPivotFromCalibrationDeviceTranslationOffset(uint32_t deviceId, const vr::HmdVector3d_t& value, bool modal) {
+	if (_ipcServerQueue) {
+		ipc::Request message(ipc::RequestType::DeviceManipulation_SetYawSimulatorProperties);
+		memset(&message.msg, 0, sizeof(message.msg));
+		message.msg.dm_SetYawSimulatorProperties.clientId = m_clientId;
+		message.msg.dm_SetYawSimulatorProperties.messageId = 0;
+		message.msg.dm_SetYawSimulatorProperties.deviceId = deviceId;
+		message.msg.dm_SetYawSimulatorProperties.yawShellPivotFromCalibrationDeviceTranslationOffsetValid = true;
+		message.msg.dm_SetYawSimulatorProperties.yawShellPivotFromCalibrationDeviceTranslationOffset = value;
+		if (modal) {
+			uint32_t messageId = _ipcRandomDist(_ipcRandomDevice);
+			message.msg.dm_SetYawSimulatorProperties.messageId = messageId;
+			std::promise<ipc::Reply> respPromise;
+			auto respFuture = respPromise.get_future();
+			{
+				std::lock_guard<std::recursive_mutex> lock(_mutex);
+				_ipcPromiseMap.insert({ messageId, std::move(respPromise) });
+			}
+			_ipcServerQueue->send(&message, sizeof(ipc::Request), 0);
+			auto resp = respFuture.get();
+			{
+				std::lock_guard<std::recursive_mutex> lock(_mutex);
+				_ipcPromiseMap.erase(messageId);
+			}
+			std::stringstream ss;
+			ss << "Error while setting Yaw simulator/device offsets: ";
+			if (resp.status == ipc::ReplyStatus::InvalidId) {
+				ss << "Invalid device id";
+				throw vrinputemulator_invalidid(ss.str());
+			}
+			else if (resp.status == ipc::ReplyStatus::NotFound) {
+				ss << "Device not found";
+				throw vrinputemulator_notfound(ss.str());
+			}
+			else if (resp.status != ipc::ReplyStatus::Ok) {
+				ss << "Error code " << (int)resp.status;
+				throw vrinputemulator_exception(ss.str());
+			}
+		}
+		else {
+			_ipcServerQueue->send(&message, sizeof(ipc::Request), 0);
+		}
+	}
+	else {
+		throw vrinputemulator_connectionerror("No active connection.");
+	}
+}
+#endif
 
 void VRInputEmulator::triggerHapticPulse(uint32_t deviceId, uint32_t axisId, uint16_t durationMicroseconds, bool directMode, bool modal) {
 	if (_ipcServerQueue) {
