@@ -19,7 +19,7 @@ namespace vrinputemulator {
 
 namespace driver {
 
-struct YawVRPacket_t {
+struct YawSimulatorPacket_t {
 	double simYaw, simPitch, simRoll;
 	double gameYaw, gamePitch, gameRoll;
 	double motorSpeed1, motorSpeed2, motorSpeed3;
@@ -31,25 +31,33 @@ struct YawVRPacket_t {
 // forward declarations
 
 
-class YawVRUdpClient {
+class YawSimulatorClient {
 public:
 	void init();
 	void shutdown();
 
-	YawVRPacket_t getLastPacket();
+	void setYawSimulatorIPAddress(const std::string& ipAddress);
+	void connect() { _udpClientThreadShouldConnect = true; }
+	void disconnect() { _udpClientThreadShouldConnect = false; }
+	bool isConnected() { return _udpClientThreadConnected; }
+
+	YawSimulatorPacket_t getLastPacket();
 	vr::HmdQuaternion_t getSimRotation();
 
 private:
-	static void _udpClientThreadFunc(YawVRUdpClient* _this);
-	static bool parsePacket(const char* buffer, YawVRPacket_t& yawVRPacket);
+	static void _udpClientThreadFunc(YawSimulatorClient* _this);
+	static bool parsePacket(const char* buffer, YawSimulatorPacket_t& yawSimulatorPacket);
 
+	std::string _ipAddress;
 	std::thread _udpClientThread;
 	volatile bool _udpClientThreadRunning = false;
 	volatile bool _udpClientThreadStopFlag = false;
-	boost::posix_time::ptime m_nextConnectionAttemptTime;
-	boost::posix_time::ptime m_lastLogTime;
+	volatile bool _udpClientThreadShouldConnect = false;
+	volatile bool _udpClientThreadConnected = false;
+	boost::posix_time::ptime _nextConnectionAttemptTime;
 	std::mutex _mutex;
-	YawVRPacket_t m_lastPacket;
+	YawSimulatorPacket_t m_lastPacket;
+	boost::posix_time::ptime _lastLogTime;
 };
 
 

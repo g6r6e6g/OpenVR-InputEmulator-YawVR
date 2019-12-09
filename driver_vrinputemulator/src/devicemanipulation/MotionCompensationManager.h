@@ -40,11 +40,20 @@ public:
 	void setMotionCompensationKalmanObservationVariance(double variance);
 	double motionCompensationMovingAverageWindow() { return m_motionCompensationMovingAverageWindow; }
 	void setMotionCompensationMovingAverageWindow(unsigned window);
+#ifdef YAWVR
+	bool isYawBasedMotionCompensationEnabled() const { return _yawBasedMotionCompensationEnabled; }
+	void enableYawBasedMotionCompensation(bool enable) { _yawBasedMotionCompensationEnabled = enable; }
+	const vr::HmdQuaternion_t& yawShellPivotFromCalibrationDeviceRotationOffset() const { return _yawShellPivotFromCalibrationDeviceRotationOffset; }
+	vr::HmdQuaternion_t& yawShellPivotFromCalibrationDeviceRotationOffset() { return _yawShellPivotFromCalibrationDeviceRotationOffset; }
+	const vr::HmdVector3d_t& yawShellPivotFromCalibrationDeviceTranslationOffset() const { return _yawShellPivotFromCalibrationDeviceTranslationOffset; }
+	vr::HmdVector3d_t& yawShellPivotFromCalibrationDeviceTranslationOffset() { return _yawShellPivotFromCalibrationDeviceTranslationOffset; }
+#endif
 	void _disableMotionCompensationOnAllDevices();
 	bool _isMotionCompensationZeroPoseValid();
 #ifdef YAWVR
-	void _setMotionCompensationZeroPose(const vr::DriverPose_t& pose, const vr::HmdQuaternion_t& yawVRSimRotation, DeviceManipulationHandle* deviceInfo);
-	bool _applyMotionCompensation(vr::DriverPose_t& pose, const vr::HmdQuaternion_t& yawVRSimRotation, DeviceManipulationHandle* deviceInfo);
+	void _setMotionCompensationZeroPose(const vr::DriverPose_t& pose, const vr::HmdQuaternion_t& yawSimulatorRotation, DeviceManipulationHandle* deviceInfo);
+	void _updateMotionCompensationRefPose(const vr::DriverPose_t& pose);
+	bool _applyMotionCompensation(vr::DriverPose_t& pose, const vr::HmdQuaternion_t& yawSimulatorRotation, DeviceManipulationHandle* deviceInfo);
 #else
 	void _setMotionCompensationZeroPose(const vr::DriverPose_t& pose);
 	void _updateMotionCompensationRefPose(const vr::DriverPose_t& pose);
@@ -56,9 +65,9 @@ public:
 private:
 	ServerDriver* m_parent;
 
-#ifdef YAWVR
-	static vr::HmdVector3d_t ctrlr2YawVRShellPivot; // controller to shell pivot offset
-#endif
+/*TODEL #ifdef YAWVR
+	static vr::HmdVector3d_t ctrlr2YawSimulatorShellPivot; // controller to shell pivot offset
+#endif*/
 	bool _motionCompensationEnabled = false;
 	DeviceManipulationHandle* _motionCompensationRefDevice = nullptr;
 	MotionCompensationStatus _motionCompensationStatus = MotionCompensationStatus::WaitingForZeroRef;
@@ -68,12 +77,17 @@ private:
 	double m_motionCompensationKalmanProcessVariance = 0.1;
 	double m_motionCompensationKalmanObservationVariance = 0.1;
 	unsigned m_motionCompensationMovingAverageWindow = 3;
+#ifdef YAWVR
+	bool _yawBasedMotionCompensationEnabled = false;
+	vr::HmdQuaternion_t _yawShellPivotFromCalibrationDeviceRotationOffset = { 1.0, 0.0, 0.0, 0.0 }; // Yaw simulator shell pivot facing what the controller pointing, same up
+	vr::HmdVector3d_t _yawShellPivotFromCalibrationDeviceTranslationOffset = { 0.0, -0.10, 0.0 }; // Yaw simulator shell pivot should be 10cm below the controller
+#endif
 
 	bool _motionCompensationZeroPoseValid = false;
 	vr::HmdVector3d_t _motionCompensationZeroPos;
 	vr::HmdQuaternion_t _motionCompensationZeroRot;
 #ifdef YAWVR
-	vr::HmdQuaternion_t _motionCompensationYawVRZeroRot;
+	vr::HmdQuaternion_t _motionCompensationYawSimulatorZeroRot;
 #endif
 
 	bool _motionCompensationRefPoseValid = false;
@@ -81,8 +95,8 @@ private:
 	vr::HmdQuaternion_t _motionCompensationRotDiff;
 	vr::HmdQuaternion_t _motionCompensationRotDiffInv;
 #ifdef YAWVR
-	vr::HmdQuaternion_t _motionCompensationYawVRRotDiff;
-	vr::HmdQuaternion_t _motionCompensationYawVRRotDiffInv;
+	vr::HmdQuaternion_t _motionCompensationYawSimulatorRotDiff;
+	vr::HmdQuaternion_t _motionCompensationYawSimulatorRotDiffInv;
 #endif
 
 	bool _motionCompensationRefVelAccValid = false;

@@ -36,7 +36,7 @@
     <ClCompile Include="src\driver_vrinputemulator.cpp" />
     <ClCompile Include="src\hooks\IVRServerDriverHost004Hooks.cpp" />
     <ClCompile Include="src\devicemanipulation\utils\KalmanFilter.cpp" />
-    <ClCompile Include="src\yawvr\YawVRUdpClient.cpp" />
+    <ClCompile Include="src\yawvr\YawSimulatorUdpClient.cpp" />
     <ClCompile Include="src\yawvr\YawVRUnityTesterUdpClient.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -58,7 +58,7 @@
     <ClInclude Include="src\driver\utils\DevicePropertyValueVisitor.h" />
     <ClInclude Include="src\devicemanipulation\utils\KalmanFilter.h" />
     <ClInclude Include="src\devicemanipulation\utils\MovingAverageRingBuffer.h" />
-    <ClInclude Include="src\yawvr\YawVRUdpClient.h" />
+    <ClInclude Include="src\yawvr\YawSimulatorUdpClient.h" />
     <ClInclude Include="src\yawvr\YawVRUnityTesterUdpClient.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

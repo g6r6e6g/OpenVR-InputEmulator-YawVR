@@ -10,7 +10,7 @@
 #include "../logging.h"
 #include "../com/shm/driver_ipc_shm.h"
 #ifdef YAWVR
-#include "../yawvr/YawVRUdpClient.h"
+#include "../yawvr/YawSimulatorUdpClient.h"
 #include "../yawvr/YawVRUnityTesterUdpClient.h"
 #endif
 #include "../devicemanipulation/MotionCompensationManager.h"
@@ -110,8 +110,8 @@ public:
 	void _trackedDeviceDeactivated(uint32_t deviceId);
 
 #ifdef YAWVR
-	/* YawVR UDP client related */
-	YawVRUdpClient& yawVRUdpClient() { return m_yawVRUdpClient; }
+	/* Yaw simulator UDP client related */
+	YawSimulatorClient& yawSimulatorUdpClient() { return m_yawSimulatorUdpClient; }
 	/* YawVRUnityTester UDP client related */
 	YawVRUnityTesterUdpClient& yawVRUnityTesterUdpServer() { return m_yawVRUnityTesterUdpClient; }
 #endif
@@ -170,8 +170,8 @@ private:
 	std::map<uint64_t, DeviceManipulationHandle*> _inputComponentToDeviceManipulationHandleMap;
 
 #ifdef YAWVR
-	//// YawVR UDP client related ////
-	YawVRUdpClient m_yawVRUdpClient;
+	//// Yaw simulator UDP client related ////
+	YawSimulatorClient m_yawSimulatorUdpClient;
 	//// YawVRUnityTester UDP server related ////
 	YawVRUnityTesterUdpClient m_yawVRUnityTesterUdpClient;
 #endif

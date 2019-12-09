@@ -30,12 +30,6 @@ struct AnalogInputRemappingProfile {
 	AnalogInputRemappingProfile() : remapping(true) {}
 };
 
-#ifdef YAWVR
-struct IPAddress_t {
-	int p[4];
-};
-#endif
-
 struct DeviceManipulationProfile {
 	std::string profileName;
 
@@ -47,12 +41,12 @@ struct DeviceManipulationProfile {
 	vr::HmdVector3d_t driverFromHeadRotationOffset;
 	vr::HmdVector3d_t driverTranslationOffset;
 	vr::HmdVector3d_t driverRotationOffset;
-#ifdef YAWVR
+/*TODEL #ifdef YAWVR
 	bool yawBasedMotionCompensationEnabled = false;
 	IPAddress_t yawSimulatorIPAddress = { 192, 168, 1, 104 };
 	vr::HmdVector3d_t yawShellPivotFromCalibrationDeviceTranslationOffset;
 	vr::HmdVector3d_t yawShellPivotFromCalibrationDeviceRotationOffset;
-#endif
+#endif*/
 	bool includesInputRemapping = false;
 	std::map<int, DigitalInputRemappingProfile> digitalRemappingProfiles;
 	AnalogInputRemappingProfile analogRemappingProfiles[5];
@@ -73,12 +67,12 @@ struct DeviceInfo {
 	vr::HmdVector3d_t driverFromHeadTranslationOffset;
 	vr::HmdVector3d_t deviceRotationOffset;
 	vr::HmdVector3d_t deviceTranslationOffset;
-#ifdef YAWVR
+/*TODEL #ifdef YAWVR
 	bool yawBasedMotionCompensationEnabled;
 	IPAddress_t yawSimulatorIPAddress;
 	vr::HmdVector3d_t yawShellPivotFromCalibrationDeviceTranslationOffset;
 	vr::HmdVector3d_t yawShellPivotFromCalibrationDeviceRotationOffset;
-#endif
+#endif*/
 	uint32_t renderModelIndex = 0;
 	vr::VROverlayHandle_t renderModelOverlay = vr::k_ulOverlayHandleInvalid;
 	std::string renderModelOverlayName;
@@ -101,6 +95,13 @@ private:
 	double motionCompensationKalmanProcessNoise = 0.1;
 	double motionCompensationKalmanObservationNoise = 0.1;
 	unsigned motionCompensationMovingAverageWindow = 3;
+
+#ifdef YAWVR
+	bool m_yawBasedMotionCompensationEnabled = false;
+	vrinputemulator::IPAddress_t yawSimulatorIPAddress = { 192, 168, 1, 104 };
+	vr::HmdVector3d_t yawShellPivotFromCalibrationDeviceTranslationOffset = { 0.0, -0.10, 0.0 }; // Yaw simulator shell pivot should be 10cm below the controller
+	vr::HmdVector3d_t yawShellPivotFromCalibrationDeviceRotationOffset = { 0.0, 0.0, 0.0 }; // Yaw simulator shell pivot facing what the controller pointing, same up
+#endif
 
 	QString m_deviceModeErrorString;
 
@@ -130,20 +131,26 @@ public:
 	Q_INVOKABLE double getDriverFromHeadTranslationOffset(unsigned index, unsigned axis);
 	Q_INVOKABLE double getDriverRotationOffset(unsigned index, unsigned axis);
 	Q_INVOKABLE double getDriverTranslationOffset(unsigned index, unsigned axis);
-#ifdef YAWVR
-	Q_INVOKABLE bool yawBasedMotionCompensationEnabled(unsigned index);
-	Q_INVOKABLE int getYawSimulatorIPAddress(unsigned index, unsigned part);
-	Q_INVOKABLE double getYawShellPivotFromCalibrationDeviceRotationOffset(unsigned index, unsigned axis);
-	Q_INVOKABLE double getYawShellPivotFromCalibrationDeviceTranslationOffset(unsigned index, unsigned axis);
-#endif
 	Q_INVOKABLE unsigned getMotionCompensationVelAccMode();
 	Q_INVOKABLE double getMotionCompensationKalmanProcessNoise();
 	Q_INVOKABLE double getMotionCompensationKalmanObservationNoise();
 	Q_INVOKABLE unsigned getMotionCompensationMovingAverageWindow();
+#ifdef YAWVR
+	Q_INVOKABLE bool yawBasedMotionCompensationEnabled();
+	Q_INVOKABLE int getYawSimulatorIPAddress(unsigned part);
+	Q_INVOKABLE double getYawShellPivotFromCalibrationDeviceRotationOffset(unsigned axis);
+	Q_INVOKABLE double getYawShellPivotFromCalibrationDeviceTranslationOffset(unsigned axis);
+#endif
 
 	void reloadDeviceManipulationSettings();
+#ifdef YAWVR
+	void reloadYawSimulatorSettings();
+#endif
 	void reloadDeviceManipulationProfiles();
 	void saveDeviceManipulationSettings();
+#ifdef YAWVR
+	void saveYawSimulatorSettings();
+#endif
 	void saveDeviceManipulationProfiles();
 
 	Q_INVOKABLE unsigned getDeviceManipulationProfileCount();
@@ -176,18 +183,12 @@ public:
 
 public slots:
 	void enableDeviceOffsets(unsigned index, bool enable, bool notify = true);
-	void setWorldFromDriverRotationOffset(unsigned index, double x, double y, double z, bool notify = true);
-	void setWorldFromDriverTranslationOffset(unsigned index, double yaw, double pitch, double roll, bool notify = true);
-	void setDriverFromHeadRotationOffset(unsigned index, double x, double y, double z, bool notify = true);
-	void setDriverFromHeadTranslationOffset(unsigned index, double yaw, double pitch, double roll, bool notify = true);
-	void setDriverRotationOffset(unsigned index, double x, double y, double z, bool notify = true);
-	void setDriverTranslationOffset(unsigned index, double yaw, double pitch, double roll, bool notify = true);
-#ifdef YAWVR
-	void enableYawBasedMotionCompensation(unsigned index, bool enable, bool notify = true);
-	void setYawSimulatorIPAddress(unsigned index, int part1, int part2, int part3, int part4, bool notify = true);
-	void setYawShellPivotFromCalibrationDeviceRotationOffset(unsigned index, double x, double y, double z, bool notify = true);
-	void setYawShellPivotFromCalibrationDeviceTranslationOffset(unsigned index, double yaw, double pitch, double roll, bool notify = true);
-#endif
+	void setWorldFromDriverRotationOffset(unsigned index, double yaw, double pitch, double roll, bool notify = true); 
+	void setWorldFromDriverTranslationOffset(unsigned index, double x, double y, double z, bool notify = true);
+	void setDriverFromHeadRotationOffset(unsigned index, double yaw, double pitch, double roll, bool notify = true);
+	void setDriverFromHeadTranslationOffset(unsigned index, double x, double y, double z, bool notify = true); 
+	void setDriverRotationOffset(unsigned index, double yaw, double pitch, double roll, bool notify = true);
+	void setDriverTranslationOffset(unsigned index, double x, double y, double z, bool notify = true); 
 	void triggerHapticPulse(unsigned index);
 	void setDeviceRenderModel(unsigned deviceIndex, unsigned renderModelIndex);
 
@@ -200,6 +201,13 @@ public slots:
 	void setMotionCompensationKalmanObservationNoise(double variance, bool notify = true);
 	void setMotionCompensationMovingAverageWindow(unsigned window, bool notify = true);
 
+#ifdef YAWVR
+	void enableYawBasedMotionCompensation(bool enable, bool notify = true);
+	void setYawSimulatorIPAddress(int part1, int part2, int part3, int part4, bool notify = true);
+	void setYawShellPivotFromCalibrationDeviceRotationOffset(double yaw, double pitch, double roll, bool notify = true); 
+	void setYawShellPivotFromCalibrationDeviceTranslationOffset(double x, double y, double z, bool notify = true);
+#endif
+
 signals:
 	void deviceCountChanged(unsigned deviceCount);
 	void deviceInfoChanged(unsigned index);
@@ -209,6 +217,9 @@ signals:
 	void motionCompensationKalmanProcessNoiseChanged(double variance);
 	void motionCompensationKalmanObservationNoiseChanged(double variance);
 	void motionCompensationMovingAverageWindowChanged(unsigned window);
+//#ifdef YAWVR
+	void yawSimulatorSettingsChanged();
+//#endif
 
 	void configureDigitalInputRemappingFinished();
 	void configureAnalogInputRemappingFinished();

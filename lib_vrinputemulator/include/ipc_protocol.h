@@ -306,7 +306,6 @@ struct Request_DeviceManipulation_SetMotionCompensationProperties {
 struct Request_DeviceManipulation_SetYawSimulatorProperties {
 	uint32_t clientId;
 	uint32_t messageId; // Used to associate with Reply
-	uint32_t deviceId;
 	uint32_t enableYawBasedMotionCompensation; // 0 .. don't change, 1 .. enable, 2 .. disable
 	char yawSimulatorIPAddress[16];
 	uint32_t offsetOperation; // 0 .. set, 1 .. add

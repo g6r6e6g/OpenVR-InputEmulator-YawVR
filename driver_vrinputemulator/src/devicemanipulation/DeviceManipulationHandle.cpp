@@ -126,12 +126,35 @@ bool DeviceManipulationHandle::handlePoseUpdate(uint32_t& unWhichDevice, vr::Dri
 #endif
 		if (serverDriver) {
 #ifdef YAWVR
-			if (newPose.poseIsValid && newPose.result == vr::TrackingResult_Running_OK) {
-				if (!m_motionCompensationManager._isMotionCompensationZeroPoseValid()) {
+			if (m_yawBasedMotionCompensationEnabled) {
+				if (newPose.poseIsValid && newPose.result == vr::TrackingResult_Running_OK && serverDriver->yawSimulatorUdpClient().isConnected()) {
+					if (!m_motionCompensationManager._isMotionCompensationZeroPoseValid()) {
+						m_motionCompensationManager._setMotionCompensationStatus(MotionCompensationStatus::Running);
+						m_motionCompensationManager._setMotionCompensationZeroPose(newPose, serverDriver->yawSimulatorUdpClient().getSimRotation(), this);
+						m_deviceMode = 0;
+						serverDriver->sendReplySetMotionCompensationMode(true);
+					}
+				}
+			}
+			else {
+				if (newPose.poseIsValid && newPose.result == vr::TrackingResult_Running_OK) {
 					m_motionCompensationManager._setMotionCompensationStatus(MotionCompensationStatus::Running);
-					m_motionCompensationManager._setMotionCompensationZeroPose(newPose, serverDriver->yawVRUdpClient().getSimRotation(), this);
-					m_deviceMode = 0;
-					serverDriver->sendReplySetMotionCompensationMode(true);
+					if (!m_motionCompensationManager._isMotionCompensationZeroPoseValid()) {
+						m_motionCompensationManager._setMotionCompensationZeroPose(newPose, { 1.0, 0.0, 0.0, 0.0 }, this);
+						serverDriver->sendReplySetMotionCompensationMode(true);
+					}
+					else {
+						m_motionCompensationManager._updateMotionCompensationRefPose(newPose);
+					}
+				}
+				else {
+					if (!m_motionCompensationManager._isMotionCompensationZeroPoseValid()) {
+						setDefaultMode();
+						serverDriver->sendReplySetMotionCompensationMode(false);
+					}
+					else {
+						m_motionCompensationManager._setMotionCompensationStatus(MotionCompensationStatus::MotionRefNotTracking);
+					}
 				}
 			}
 #else
@@ -182,8 +205,9 @@ bool DeviceManipulationHandle::handlePoseUpdate(uint32_t& unWhichDevice, vr::Dri
 		
 #ifdef YAWVR
 		auto serverDriver = ServerDriver::getInstance();
-		if (serverDriver) {
-			m_motionCompensationManager._applyMotionCompensation(newPose, serverDriver->yawVRUdpClient().getSimRotation(), this);
+		if (serverDriver &&
+			!m_yawBasedMotionCompensationEnabled || (m_yawBasedMotionCompensationEnabled && !serverDriver->yawSimulatorUdpClient().isConnected())) {
+			m_motionCompensationManager._applyMotionCompensation(newPose, serverDriver->yawSimulatorUdpClient().getSimRotation(), this);
 		}
 #else
 		m_motionCompensationManager._applyMotionCompensation(newPose, this);
