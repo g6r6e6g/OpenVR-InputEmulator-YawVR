@@ -1704,13 +1704,12 @@ void VRInputEmulator::setMotionCompensationMovingAverageWindow(unsigned window, 
 }
 
 #ifdef YAWVR
-void VRInputEmulator::enableYawBasedMotionCompensation(uint32_t deviceId, bool enable, bool modal) {
+void VRInputEmulator::enableYawBasedMotionCompensation(bool enable, bool modal) {
 	if (_ipcServerQueue) {
 		ipc::Request message(ipc::RequestType::DeviceManipulation_SetYawSimulatorProperties);
 		memset(&message.msg, 0, sizeof(message.msg));
 		message.msg.dm_SetYawSimulatorProperties.clientId = m_clientId;
 		message.msg.dm_SetYawSimulatorProperties.messageId = 0;
-		message.msg.dm_SetYawSimulatorProperties.deviceId = deviceId;
 		message.msg.dm_SetYawSimulatorProperties.enableYawBasedMotionCompensation = enable ? 1 : 2;
 		if (modal) {
 			uint32_t messageId = _ipcRandomDist(_ipcRandomDevice);
@@ -1752,13 +1751,12 @@ void VRInputEmulator::enableYawBasedMotionCompensation(uint32_t deviceId, bool e
 	}
 }
 
-void VRInputEmulator::setYawSimulatorIPAddress(uint32_t deviceId, const std::string& ipAddress, bool modal) {
+void VRInputEmulator::setYawSimulatorIPAddress(const std::string& ipAddress, bool modal) {
 	if (_ipcServerQueue) {
 		ipc::Request message(ipc::RequestType::DeviceManipulation_SetYawSimulatorProperties);
 		memset(&message.msg, 0, sizeof(message.msg));
 		message.msg.dm_SetYawSimulatorProperties.clientId = m_clientId;
 		message.msg.dm_SetYawSimulatorProperties.messageId = 0;
-		message.msg.dm_SetYawSimulatorProperties.deviceId = deviceId;
 		strncpy_s(message.msg.dm_SetYawSimulatorProperties.yawSimulatorIPAddress, ipAddress.c_str(), 15);
 		message.msg.dm_SetYawSimulatorProperties.yawSimulatorIPAddress[15] = '\0';
 		if (modal) {
@@ -1800,13 +1798,12 @@ void VRInputEmulator::setYawSimulatorIPAddress(uint32_t deviceId, const std::str
 	}
 }
 
-void VRInputEmulator::setYawShellPivotFromCalibrationDeviceRotationOffset(uint32_t deviceId, const vr::HmdQuaternion_t& value, bool modal) {
+void VRInputEmulator::setYawShellPivotFromCalibrationDeviceRotationOffset(const vr::HmdQuaternion_t& value, bool modal) {
 	if (_ipcServerQueue) {
 		ipc::Request message(ipc::RequestType::DeviceManipulation_SetYawSimulatorProperties);
 		memset(&message.msg, 0, sizeof(message.msg));
 		message.msg.dm_SetYawSimulatorProperties.clientId = m_clientId;
 		message.msg.dm_SetYawSimulatorProperties.messageId = 0;
-		message.msg.dm_SetYawSimulatorProperties.deviceId = deviceId;
 		message.msg.dm_SetYawSimulatorProperties.yawShellPivotFromCalibrationDeviceRotationOffsetValid = true;
 		message.msg.dm_SetYawSimulatorProperties.yawShellPivotFromCalibrationDeviceRotationOffset = value;
 		if (modal) {
@@ -1848,13 +1845,12 @@ void VRInputEmulator::setYawShellPivotFromCalibrationDeviceRotationOffset(uint32
 	}
 }
 
-void VRInputEmulator::setYawShellPivotFromCalibrationDeviceTranslationOffset(uint32_t deviceId, const vr::HmdVector3d_t& value, bool modal) {
+void VRInputEmulator::setYawShellPivotFromCalibrationDeviceTranslationOffset(const vr::HmdVector3d_t& value, bool modal) {
 	if (_ipcServerQueue) {
 		ipc::Request message(ipc::RequestType::DeviceManipulation_SetYawSimulatorProperties);
 		memset(&message.msg, 0, sizeof(message.msg));
 		message.msg.dm_SetYawSimulatorProperties.clientId = m_clientId;
 		message.msg.dm_SetYawSimulatorProperties.messageId = 0;
-		message.msg.dm_SetYawSimulatorProperties.deviceId = deviceId;
 		message.msg.dm_SetYawSimulatorProperties.yawShellPivotFromCalibrationDeviceTranslationOffsetValid = true;
 		message.msg.dm_SetYawSimulatorProperties.yawShellPivotFromCalibrationDeviceTranslationOffset = value;
 		if (modal) {

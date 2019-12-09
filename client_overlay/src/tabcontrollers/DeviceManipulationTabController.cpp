@@ -20,6 +20,9 @@ DeviceManipulationTabController::~DeviceManipulationTabController() {
 void DeviceManipulationTabController::initStage1() {
 	reloadDeviceManipulationProfiles();
 	reloadDeviceManipulationSettings();
+#ifdef YAWVR
+	reloadYawSimulatorSettings();
+#endif
 }
 
 
@@ -49,10 +52,10 @@ void DeviceManipulationTabController::initStage2(OverlayController * parent, QQu
 						parent->vrInputEmulator().getDeviceInfo(info->openvrId, info2);
 						info->deviceMode = info2.deviceMode;
 						info->deviceOffsetsEnabled = info2.offsetsEnabled;
-#ifdef YAWVR
+/*TODEL #ifdef YAWVR
 						info->yawBasedMotionCompensationEnabled = info2.yawBasedMotionCompensationEnabled;
 						// TODO yawSimulatorIPAddress ?
-#endif
+#endif*/
 						if (info->deviceMode == 2 || info->deviceMode == 3) {
 							info->deviceStatus = info2.redirectSuspended ? 1 : 0;
 						}
@@ -113,10 +116,10 @@ void DeviceManipulationTabController::eventLoopTick(vr::TrackedDevicePose_t* dev
 							parent->vrInputEmulator().getDeviceInfo(info->openvrId, info2);
 							info->deviceMode = info2.deviceMode;
 							info->deviceOffsetsEnabled = info2.offsetsEnabled;
-#ifdef YAWVR
+/*TODEL #ifdef YAWVR
 							info->yawBasedMotionCompensationEnabled = info2.yawBasedMotionCompensationEnabled;
 							// TODO yawSimulatorIPAddress ?
-#endif
+#endif*/
 							if (info->deviceMode == 2 || info->deviceMode == 3) {
 								info->deviceStatus = info2.redirectSuspended ? 1 : 0;
 							}
@@ -260,44 +263,6 @@ double DeviceManipulationTabController::getDriverTranslationOffset(unsigned inde
 	}
 }
 
-#ifdef YAWVR
-bool DeviceManipulationTabController::yawBasedMotionCompensationEnabled(unsigned index) {
-	if (index < deviceInfos.size()) {
-		return deviceInfos[index]->yawBasedMotionCompensationEnabled;
-	}
-	else {
-		return false;
-	}
-}
-
-int DeviceManipulationTabController::getYawSimulatorIPAddress(unsigned index, unsigned part) {
-	if (index < deviceInfos.size() && part < 4) {
-		return deviceInfos[index]->yawSimulatorIPAddress.p[part];
-	}
-	else {
-		return 0.0;
-	}
-}
-
-double DeviceManipulationTabController::getYawShellPivotFromCalibrationDeviceRotationOffset(unsigned index, unsigned axis) {
-	if (index < deviceInfos.size() && axis < 3) {
-		return deviceInfos[index]->yawShellPivotFromCalibrationDeviceRotationOffset.v[axis];
-	}
-	else {
-		return 0.0;
-	}
-}
-
-double DeviceManipulationTabController::getYawShellPivotFromCalibrationDeviceTranslationOffset(unsigned index, unsigned axis) {
-	if (index < deviceInfos.size() && axis < 3) {
-		return deviceInfos[index]->yawShellPivotFromCalibrationDeviceTranslationOffset.v[axis];
-	}
-	else {
-		return 0.0;
-	}
-}
-#endif
-
 unsigned DeviceManipulationTabController::getMotionCompensationVelAccMode() {
 	return (unsigned)motionCompensationVelAccMode;
 }
@@ -314,6 +279,24 @@ unsigned DeviceManipulationTabController::getMotionCompensationMovingAverageWind
 	return motionCompensationMovingAverageWindow;
 }
 
+#ifdef YAWVR
+bool DeviceManipulationTabController::yawBasedMotionCompensationEnabled() {
+	return m_yawBasedMotionCompensationEnabled;
+}
+
+int DeviceManipulationTabController::getYawSimulatorIPAddress(unsigned part) {
+	return yawSimulatorIPAddress.p[part];
+}
+
+double DeviceManipulationTabController::getYawShellPivotFromCalibrationDeviceRotationOffset(unsigned axis) {
+	return yawShellPivotFromCalibrationDeviceRotationOffset.v[axis];
+}
+
+double DeviceManipulationTabController::getYawShellPivotFromCalibrationDeviceTranslationOffset(unsigned axis) {
+	return yawShellPivotFromCalibrationDeviceTranslationOffset.v[axis];
+}
+#endif
+
 
 #define DEVICEMANIPULATIONSETTINGS_GETTRANSLATIONVECTOR(name) { \
 	double valueX = settings->value(#name ## "_x", 0.0).toDouble(); \
@@ -329,13 +312,65 @@ unsigned DeviceManipulationTabController::getMotionCompensationMovingAverageWind
 	entry.name = { valueY, valueP, valueR }; \
 }
 
+#define DEVICEMANIPULATIONSETTINGS_WRITETRANSLATIONVECTOR(name) { \
+	auto& vec = p.name; \
+	settings->setValue(#name ## "_x", vec.v[0]); \
+	settings->setValue(#name ## "_y", vec.v[1]); \
+	settings->setValue(#name ## "_z", vec.v[2]); \
+}
+
+
+#define DEVICEMANIPULATIONSETTINGS_WRITEROTATIONVECTOR(name) { \
+	auto& vec = p.name; \
+	settings->setValue(#name ## "_yaw", vec.v[0]); \
+	settings->setValue(#name ## "_pitch", vec.v[1]); \
+	settings->setValue(#name ## "_roll", vec.v[2]); \
+}
+
 #ifdef YAWVR
-#define DEVICEMANIPULATIONSETTINGS_GETIPADDRESS(name) { \
+#define YAWSIMULATORSETTINGS_GETTRANSLATIONVECTOR(name) { \
+	double valueX = settings->value(#name ## "_x", 0.0).toDouble(); \
+	double valueY = settings->value(#name ## "_y", 0.0).toDouble(); \
+	double valueZ = settings->value(#name ## "_z", 0.0).toDouble(); \
+	name = { valueX, valueY, valueZ }; \
+}
+
+#define YAWSIMULATORSETTINGS_GETROTATIONVECTOR(name) { \
+	double valueY = settings->value(#name ## "_yaw", 0.0).toDouble(); \
+	double valueP = settings->value(#name ## "_pitch", 0.0).toDouble(); \
+	double valueR = settings->value(#name ## "_roll", 0.0).toDouble(); \
+	name = { valueY, valueP, valueR }; \
+}
+
+#define YAWSIMULATORSETTINGS_GETIPADDRESS(name) { \
 	int value0 = settings->value(#name ## "_0", 0).toInt(); \
 	int value1 = settings->value(#name ## "_1", 0).toInt(); \
 	int value2 = settings->value(#name ## "_2", 0).toInt(); \
 	int value3 = settings->value(#name ## "_3", 0).toInt(); \
-	entry.name = { value0, value1, value2, value3 }; \
+	name = { value0, value1, value2, value3 }; \
+}
+
+#define YAWSIMULATORSETTINGS_WRITETRANSLATIONVECTOR(name) { \
+	auto& vec = name; \
+	settings->setValue(#name ## "_x", vec.v[0]); \
+	settings->setValue(#name ## "_y", vec.v[1]); \
+	settings->setValue(#name ## "_z", vec.v[2]); \
+}
+
+
+#define YAWSIMULATORSETTINGS_WRITEROTATIONVECTOR(name) { \
+	auto& vec = name; \
+	settings->setValue(#name ## "_yaw", vec.v[0]); \
+	settings->setValue(#name ## "_pitch", vec.v[1]); \
+	settings->setValue(#name ## "_roll", vec.v[2]); \
+}
+
+#define YAWSIMULATORSETTINGS_WRITEIPADDRESS(name) { \
+	auto& ipAddress = name; \
+	settings->setValue(#name ## "_0", ipAddress.p[0]); \
+	settings->setValue(#name ## "_1", ipAddress.p[1]); \
+	settings->setValue(#name ## "_2", ipAddress.p[2]); \
+	settings->setValue(#name ## "_3", ipAddress.p[3]); \
 }
 #endif
 
@@ -348,6 +383,19 @@ void DeviceManipulationTabController::reloadDeviceManipulationSettings() {
 	motionCompensationMovingAverageWindow = settings->value("motionCompensationMovingAverageWindow", 3).toUInt();
 	settings->endGroup();
 }
+
+#ifdef YAWVR
+void DeviceManipulationTabController::reloadYawSimulatorSettings() {
+	auto settings = OverlayController::appSettings();
+	settings->beginGroup("yawSimulatorSettings");
+	m_yawBasedMotionCompensationEnabled = settings->value("yawBasedMotionCompensationEnabled", false).toBool();
+	YAWSIMULATORSETTINGS_GETIPADDRESS(yawSimulatorIPAddress);
+	YAWSIMULATORSETTINGS_GETTRANSLATIONVECTOR(yawShellPivotFromCalibrationDeviceTranslationOffset);
+	YAWSIMULATORSETTINGS_GETROTATIONVECTOR(yawShellPivotFromCalibrationDeviceRotationOffset);
+	settings->endGroup();
+	settings->sync();
+}
+#endif
 
 void DeviceManipulationTabController::reloadDeviceManipulationProfiles() {
 	deviceManipulationProfiles.clear();
@@ -368,12 +416,12 @@ void DeviceManipulationTabController::reloadDeviceManipulationProfiles() {
 			DEVICEMANIPULATIONSETTINGS_GETROTATIONVECTOR(driverFromHeadRotationOffset);
 			DEVICEMANIPULATIONSETTINGS_GETTRANSLATIONVECTOR(driverTranslationOffset);
 			DEVICEMANIPULATIONSETTINGS_GETROTATIONVECTOR(driverRotationOffset);
-#ifdef YAWVR
-			entry.deviceOffsetsEnabled = settings->value("deviceOffsetsEnabled", false).toBool();
+/*#ifdef YAWVR
+			entry.yawBasedMotionCompensationEnabled = settings->value("yawBasedMotionCompensationEnabled", false).toBool();
 			DEVICEMANIPULATIONSETTINGS_GETIPADDRESS(yawSimulatorIPAddress);
 			DEVICEMANIPULATIONSETTINGS_GETTRANSLATIONVECTOR(yawShellPivotFromCalibrationDeviceTranslationOffset);
 			DEVICEMANIPULATIONSETTINGS_GETROTATIONVECTOR(yawShellPivotFromCalibrationDeviceRotationOffset);
-#endif
+#endif*/
 		}
 
 		entry.includesInputRemapping = settings->value("includesInputRemapping", false).toBool();
@@ -463,31 +511,19 @@ void DeviceManipulationTabController::saveDeviceManipulationSettings() {
 	settings->sync();
 }
 
-
-#define DEVICEMANIPULATIONSETTINGS_WRITETRANSLATIONVECTOR(name) { \
-	auto& vec = p.name; \
-	settings->setValue(#name ## "_x", vec.v[0]); \
-	settings->setValue(#name ## "_y", vec.v[1]); \
-	settings->setValue(#name ## "_z", vec.v[2]); \
-}
-
-
-#define DEVICEMANIPULATIONSETTINGS_WRITEROTATIONVECTOR(name) { \
-	auto& vec = p.name; \
-	settings->setValue(#name ## "_yaw", vec.v[0]); \
-	settings->setValue(#name ## "_pitch", vec.v[1]); \
-	settings->setValue(#name ## "_roll", vec.v[2]); \
-}
-
 #ifdef YAWVR
-#define DEVICEMANIPULATIONSETTINGS_WRITEIPADDRESS(name) { \
-	auto& ipAddress = p.name; \
-	settings->setValue(#name ## "_0", ipAddress.p[0]); \
-	settings->setValue(#name ## "_1", ipAddress.p[1]); \
-	settings->setValue(#name ## "_2", ipAddress.p[2]); \
-	settings->setValue(#name ## "_3", ipAddress.p[3]); \
+void DeviceManipulationTabController::saveYawSimulatorSettings() {
+	auto settings = OverlayController::appSettings();
+	settings->beginGroup("yawSimulatorSettings");
+	settings->setValue("yawBasedMotionCompensationEnabled", m_yawBasedMotionCompensationEnabled);
+	YAWSIMULATORSETTINGS_WRITEIPADDRESS(yawSimulatorIPAddress);
+	YAWSIMULATORSETTINGS_WRITETRANSLATIONVECTOR(yawShellPivotFromCalibrationDeviceTranslationOffset);
+	YAWSIMULATORSETTINGS_WRITEROTATIONVECTOR(yawShellPivotFromCalibrationDeviceRotationOffset);
+	settings->endGroup();
+	settings->sync();
 }
 #endif
+
 
 void DeviceManipulationTabController::saveDeviceManipulationProfiles() {
 	auto settings = OverlayController::appSettings();
@@ -528,12 +564,12 @@ void DeviceManipulationTabController::saveDeviceManipulationProfiles() {
 			DEVICEMANIPULATIONSETTINGS_WRITEROTATIONVECTOR(driverFromHeadRotationOffset);
 			DEVICEMANIPULATIONSETTINGS_WRITETRANSLATIONVECTOR(driverTranslationOffset);
 			DEVICEMANIPULATIONSETTINGS_WRITEROTATIONVECTOR(driverRotationOffset);
-#ifdef YAWVR
+/*TODEL #ifdef YAWVR
 			settings->setValue("yawBasedMotionCompensationEnabled", p.yawBasedMotionCompensationEnabled);
 			DEVICEMANIPULATIONSETTINGS_WRITEIPADDRESS(yawSimulatorIPAddress);
 			DEVICEMANIPULATIONSETTINGS_WRITETRANSLATIONVECTOR(yawShellPivotFromCalibrationDeviceTranslationOffset);
 			DEVICEMANIPULATIONSETTINGS_WRITEROTATIONVECTOR(yawShellPivotFromCalibrationDeviceRotationOffset);
-#endif
+#endif*/
 		}
 		settings->setValue("includesInputRemapping", p.includesInputRemapping);
 		if (p.includesInputRemapping) {
@@ -627,12 +663,12 @@ void DeviceManipulationTabController::addDeviceManipulationProfile(QString name,
 		profile->driverFromHeadRotationOffset = device->driverFromHeadRotationOffset;
 		profile->driverTranslationOffset = device->deviceTranslationOffset;
 		profile->driverRotationOffset = device->deviceRotationOffset;
-#ifdef YAWVR
+/*TODEL #ifdef YAWVR
 		profile->yawBasedMotionCompensationEnabled = device->yawBasedMotionCompensationEnabled;
 		profile->yawSimulatorIPAddress = device->yawSimulatorIPAddress;
 		profile->yawShellPivotFromCalibrationDeviceTranslationOffset = device->yawShellPivotFromCalibrationDeviceTranslationOffset;
 		profile->yawShellPivotFromCalibrationDeviceRotationOffset = device->yawShellPivotFromCalibrationDeviceRotationOffset;
-#endif
+#endif*/
 	}
 	profile->includesInputRemapping = includesInputRemapping;
 	if (includesInputRemapping) {
@@ -714,12 +750,12 @@ void DeviceManipulationTabController::applyDeviceManipulationProfile(unsigned in
 			setDriverRotationOffset(deviceIndex, profile.driverRotationOffset.v[0], profile.driverRotationOffset.v[1], profile.driverRotationOffset.v[2], false);
 			setDriverTranslationOffset(deviceIndex, profile.driverTranslationOffset.v[0], profile.driverTranslationOffset.v[1], profile.driverTranslationOffset.v[2], false);
 			enableDeviceOffsets(deviceIndex, profile.deviceOffsetsEnabled, false);
-#ifdef YAWVR
+/*TODEL #ifdef YAWVR
 			setYawShellPivotFromCalibrationDeviceRotationOffset(deviceIndex, profile.yawShellPivotFromCalibrationDeviceRotationOffset.v[0], profile.yawShellPivotFromCalibrationDeviceRotationOffset.v[1], profile.yawShellPivotFromCalibrationDeviceRotationOffset.v[2], false);
 			setYawShellPivotFromCalibrationDeviceTranslationOffset(deviceIndex, profile.yawShellPivotFromCalibrationDeviceTranslationOffset.v[0], profile.yawShellPivotFromCalibrationDeviceTranslationOffset.v[1], profile.yawShellPivotFromCalibrationDeviceTranslationOffset.v[2], false);
 			enableYawBasedMotionCompensation(deviceIndex, profile.yawBasedMotionCompensationEnabled, false);
 			setYawSimulatorIPAddress(deviceIndex, profile.yawSimulatorIPAddress.p[0], profile.yawSimulatorIPAddress.p[1], profile.yawSimulatorIPAddress.p[2], profile.yawSimulatorIPAddress.p[3], false);
-#endif
+#endif*/
 			updateDeviceInfo(deviceIndex);
 		}
 		if (profile.includesInputRemapping) {
@@ -854,6 +890,64 @@ void DeviceManipulationTabController::setMotionCompensationMovingAverageWindow(u
 		}
 	}
 }
+
+#ifdef YAWVR
+void DeviceManipulationTabController::enableYawBasedMotionCompensation(bool enable, bool notify) {
+	if (m_yawBasedMotionCompensationEnabled != enable) {
+		m_yawBasedMotionCompensationEnabled = enable;
+		parent->vrInputEmulator().enableYawBasedMotionCompensation(enable);
+		saveYawSimulatorSettings();
+		if (notify) {
+			emit yawSimulatorSettingsChanged();
+		}
+	}
+}
+
+void DeviceManipulationTabController::setYawSimulatorIPAddress(int part1, int part2, int part3, int part4, bool notify) {
+	if (yawSimulatorIPAddress.p[0] != part1 &&
+		yawSimulatorIPAddress.p[1] != part2 &&
+		yawSimulatorIPAddress.p[2] != part3 &&
+		yawSimulatorIPAddress.p[3] != part4) {
+		yawSimulatorIPAddress.p[0] = part1;
+		yawSimulatorIPAddress.p[1] = part2;
+		yawSimulatorIPAddress.p[2] = part3;
+		yawSimulatorIPAddress.p[3] = part4;
+		std::ostringstream ipAddress;
+		ipAddress << part1 << "." << part2 << "." << part3 << "." << part4;
+		parent->vrInputEmulator().setYawSimulatorIPAddress(ipAddress.str());
+		saveYawSimulatorSettings();
+		if (notify) {
+			emit yawSimulatorSettingsChanged();
+		}
+	}
+}
+
+void DeviceManipulationTabController::setYawShellPivotFromCalibrationDeviceRotationOffset(double yaw, double pitch, double roll, bool notify) {
+	if (yawShellPivotFromCalibrationDeviceRotationOffset.v[0] != yaw &&
+		yawShellPivotFromCalibrationDeviceRotationOffset.v[1] != pitch &&
+		yawShellPivotFromCalibrationDeviceRotationOffset.v[2] != roll) {
+		yawShellPivotFromCalibrationDeviceRotationOffset = { yaw, pitch, roll };
+		parent->vrInputEmulator().setYawShellPivotFromCalibrationDeviceRotationOffset(vrmath::quaternionFromYawPitchRoll(yaw * 0.01745329252, pitch * 0.01745329252, roll * 0.01745329252));
+		saveYawSimulatorSettings();
+		if (notify) {
+			emit yawSimulatorSettingsChanged();
+		}
+	}
+}
+
+void DeviceManipulationTabController::setYawShellPivotFromCalibrationDeviceTranslationOffset(double x, double y, double z, bool notify) {
+	if (yawShellPivotFromCalibrationDeviceTranslationOffset.v[0] != x &&
+		yawShellPivotFromCalibrationDeviceTranslationOffset.v[1] != y &&
+		yawShellPivotFromCalibrationDeviceTranslationOffset.v[2] != z) {
+		yawShellPivotFromCalibrationDeviceTranslationOffset = { x, y, z };
+		parent->vrInputEmulator().setYawShellPivotFromCalibrationDeviceTranslationOffset({ x * 0.01, y * 0.01, z * 0.01 });
+		saveYawSimulatorSettings();
+		if (notify) {
+			emit yawSimulatorSettingsChanged();
+		}
+	}
+}
+#endif
 
 unsigned DeviceManipulationTabController::getDigitalButtonCount(unsigned deviceIndex) {
 	unsigned count = 0;
@@ -1178,81 +1272,6 @@ void DeviceManipulationTabController::setDriverTranslationOffset(unsigned index,
 	}
 }
 
-#ifdef YAWVR
-void DeviceManipulationTabController::enableYawBasedMotionCompensation(unsigned index, bool enable, bool notify) {
-	if (index < deviceInfos.size()) {
-		try {
-			parent->vrInputEmulator().enableYawBasedMotionCompensation(deviceInfos[index]->openvrId, enable);
-			deviceInfos[index]->yawBasedMotionCompensationEnabled = enable;
-		}
-		catch (const std::exception & e) {
-			LOG(ERROR) << "Exception caught while setting translation offset: " << e.what();
-		}
-		if (notify) {
-			updateDeviceInfo(index);
-			emit deviceInfoChanged(index);
-		}
-	}
-}
-
-void DeviceManipulationTabController::setYawSimulatorIPAddress(unsigned index, int part1, int part2, int part3, int part4, bool notify) {
-	if (index < deviceInfos.size()) {
-		try {
-			std::ostringstream ipAddress;
-			ipAddress << part1 << "." << part2 << "." << part3 << "." << part4;
-			parent->vrInputEmulator().setYawSimulatorIPAddress(deviceInfos[index]->openvrId, ipAddress.str());
-			deviceInfos[index]->yawSimulatorIPAddress.p[0] = part1;
-			deviceInfos[index]->yawSimulatorIPAddress.p[1] = part2;
-			deviceInfos[index]->yawSimulatorIPAddress.p[2] = part3;
-			deviceInfos[index]->yawSimulatorIPAddress.p[3] = part4;
-		}
-		catch (const std::exception & e) {
-			LOG(ERROR) << "Exception caught while setting YawSimulator IP address: " << e.what();
-		}
-		if (notify) {
-			updateDeviceInfo(index);
-			emit deviceInfoChanged(index);
-		}
-	}
-}
-
-void DeviceManipulationTabController::setYawShellPivotFromCalibrationDeviceRotationOffset(unsigned index, double yaw, double pitch, double roll, bool notify) {
-	if (index < deviceInfos.size()) {
-		try {
-			parent->vrInputEmulator().setYawShellPivotFromCalibrationDeviceRotationOffset(deviceInfos[index]->openvrId, vrmath::quaternionFromYawPitchRoll(yaw * 0.01745329252, pitch * 0.01745329252, roll * 0.01745329252));
-			deviceInfos[index]->yawShellPivotFromCalibrationDeviceRotationOffset.v[0] = yaw;
-			deviceInfos[index]->yawShellPivotFromCalibrationDeviceRotationOffset.v[1] = pitch;
-			deviceInfos[index]->yawShellPivotFromCalibrationDeviceRotationOffset.v[2] = roll;
-		}
-		catch (const std::exception & e) {
-			LOG(ERROR) << "Exception caught while setting YawShellPivotFromCalibrationDevice rotation offset: " << e.what();
-		}
-		if (notify) {
-			updateDeviceInfo(index);
-			emit deviceInfoChanged(index);
-		}
-	}
-}
-
-void DeviceManipulationTabController::setYawShellPivotFromCalibrationDeviceTranslationOffset(unsigned index, double x, double y, double z, bool notify) {
-	if (index < deviceInfos.size()) {
-		try {
-			parent->vrInputEmulator().setYawShellPivotFromCalibrationDeviceTranslationOffset(deviceInfos[index]->openvrId, { x * 0.01, y * 0.01, z * 0.01 });
-			deviceInfos[index]->yawShellPivotFromCalibrationDeviceTranslationOffset.v[0] = x;
-			deviceInfos[index]->yawShellPivotFromCalibrationDeviceTranslationOffset.v[1] = y;
-			deviceInfos[index]->yawShellPivotFromCalibrationDeviceTranslationOffset.v[2] = z;
-		}
-		catch (const std::exception & e) {
-			LOG(ERROR) << "Exception caught while setting WorldFromYawShellPivotFromCalibrationDevice translation offset: " << e.what();
-		}
-		if (notify) {
-			updateDeviceInfo(index);
-			emit deviceInfoChanged(index);
-		}
-	}
-}
-#endif
-
 // 0 .. normal, 1 .. disable, 2 .. redirect mode, 3 .. swap mode, 4 ... motion compensation
 bool DeviceManipulationTabController::setDeviceMode(unsigned index, unsigned mode, unsigned targedIndex, bool notify) {
 	bool retval = true;
@@ -1343,13 +1362,13 @@ bool DeviceManipulationTabController::updateDeviceInfo(unsigned index) {
 				deviceInfos[index]->deviceOffsetsEnabled = info.offsetsEnabled;
 				retval = true;
 			}
-#ifdef YAWVR
+/*TODEL #ifdef YAWVR
 			if (deviceInfos[index]->yawBasedMotionCompensationEnabled != info.yawBasedMotionCompensationEnabled) {
 				deviceInfos[index]->yawBasedMotionCompensationEnabled = info.yawBasedMotionCompensationEnabled;
 				retval = true;
 			}
 			// TODO yawSimulatorIPAddress ?
-#endif
+#endif*/
 			if (deviceInfos[index]->deviceMode == 2 || deviceInfos[index]->deviceMode == 3) {
 				auto status = info.redirectSuspended ? 1 : 0;
 				if (deviceInfos[index]->deviceStatus != status) {

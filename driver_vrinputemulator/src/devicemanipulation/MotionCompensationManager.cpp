@@ -8,9 +8,9 @@
 namespace vrinputemulator {
 namespace driver {
 
-#ifdef YAWVR
+/*TODEL #ifdef YAWVR
 vr::HmdVector3d_t MotionCompensationManager::ctrlr2YawVRShellPivot = { 0.0, -0.10, 0.0 }; // YawVR shell pivot should be 10cm below the controller
-#endif
+#endif*/
 
 void MotionCompensationManager::enableMotionCompensation(bool enable) {
 	_motionCompensationZeroRefTimeout = 0;
@@ -88,7 +88,8 @@ bool MotionCompensationManager::_isMotionCompensationZeroPoseValid() {
 void MotionCompensationManager::_setMotionCompensationZeroPose(const vr::DriverPose_t& pose, const vr::HmdQuaternion_t& yawVRSimRotation, DeviceManipulationHandle* deviceInfo) {
 	// convert pose from driver space to app space
 	auto tmpConj = vrmath::quaternionConjugate(pose.qWorldFromDriverRotation);
-	vr::HmdVector3d_t z = vr::HmdVector3d_t{ pose.vecPosition[0], pose.vecPosition[1], pose.vecPosition[2] } + ctrlr2YawVRShellPivot;
+	//TODEL vr::HmdVector3d_t z = vr::HmdVector3d_t{ pose.vecPosition[0], pose.vecPosition[1], pose.vecPosition[2] } + ctrlr2YawVRShellPivot;
+	vr::HmdVector3d_t z = vr::HmdVector3d_t{ pose.vecPosition[0], pose.vecPosition[1], pose.vecPosition[2] } + _yawShellPivotFromCalibrationDeviceTranslationOffset;
 	_motionCompensationZeroPos = vrmath::quaternionRotateVector(pose.qWorldFromDriverRotation, tmpConj, z.v, true) - pose.vecWorldFromDriverTranslation;
 	_motionCompensationZeroRot = tmpConj * pose.qRotation;
 	_motionCompensationYawVRZeroRot = yawVRSimRotation;

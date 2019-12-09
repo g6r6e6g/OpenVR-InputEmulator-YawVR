@@ -31,10 +31,12 @@ struct YawVRPacket_t {
 // forward declarations
 
 
-class YawVRUdpClient {
+class YawVRUdpClient { //TORENAME YawSimulatorClient
 public:
 	void init();
 	void shutdown();
+
+	void setYawSimulatorIPAddress(const std::string& ipAddress);
 
 	YawVRPacket_t getLastPacket();
 	vr::HmdQuaternion_t getSimRotation();
@@ -43,11 +45,13 @@ private:
 	static void _udpClientThreadFunc(YawVRUdpClient* _this);
 	static bool parsePacket(const char* buffer, YawVRPacket_t& yawVRPacket);
 
+	std::string _ipAddress;
 	std::thread _udpClientThread;
 	volatile bool _udpClientThreadRunning = false;
 	volatile bool _udpClientThreadStopFlag = false;
-	boost::posix_time::ptime m_nextConnectionAttemptTime;
-	boost::posix_time::ptime m_lastLogTime;
+	volatile bool _udpClientThreadShouldDisconnect = false;
+	boost::posix_time::ptime _nextConnectionAttemptTime;
+	boost::posix_time::ptime _lastLogTime;
 	std::mutex _mutex;
 	YawVRPacket_t m_lastPacket;
 };

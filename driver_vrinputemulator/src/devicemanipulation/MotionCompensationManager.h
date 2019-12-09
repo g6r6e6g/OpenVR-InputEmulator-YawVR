@@ -40,6 +40,14 @@ public:
 	void setMotionCompensationKalmanObservationVariance(double variance);
 	double motionCompensationMovingAverageWindow() { return m_motionCompensationMovingAverageWindow; }
 	void setMotionCompensationMovingAverageWindow(unsigned window);
+#ifdef YAWVR
+	bool isYawBasedMotionCompensationEnabled() const { return _yawBasedMotionCompensationEnabled; }
+	void enableYawBasedMotionCompensation(bool enable) { _yawBasedMotionCompensationEnabled = enable; }
+	const vr::HmdQuaternion_t& yawShellPivotFromCalibrationDeviceRotationOffset() const { return _yawShellPivotFromCalibrationDeviceRotationOffset; }
+	vr::HmdQuaternion_t& yawShellPivotFromCalibrationDeviceRotationOffset() { return _yawShellPivotFromCalibrationDeviceRotationOffset; }
+	const vr::HmdVector3d_t& yawShellPivotFromCalibrationDeviceTranslationOffset() const { return _yawShellPivotFromCalibrationDeviceTranslationOffset; }
+	vr::HmdVector3d_t& yawShellPivotFromCalibrationDeviceTranslationOffset() { return _yawShellPivotFromCalibrationDeviceTranslationOffset; }
+#endif
 	void _disableMotionCompensationOnAllDevices();
 	bool _isMotionCompensationZeroPoseValid();
 #ifdef YAWVR
@@ -56,9 +64,9 @@ public:
 private:
 	ServerDriver* m_parent;
 
-#ifdef YAWVR
+/*TODEL #ifdef YAWVR
 	static vr::HmdVector3d_t ctrlr2YawVRShellPivot; // controller to shell pivot offset
-#endif
+#endif*/
 	bool _motionCompensationEnabled = false;
 	DeviceManipulationHandle* _motionCompensationRefDevice = nullptr;
 	MotionCompensationStatus _motionCompensationStatus = MotionCompensationStatus::WaitingForZeroRef;
@@ -68,6 +76,11 @@ private:
 	double m_motionCompensationKalmanProcessVariance = 0.1;
 	double m_motionCompensationKalmanObservationVariance = 0.1;
 	unsigned m_motionCompensationMovingAverageWindow = 3;
+#ifdef YAWVR
+	bool _yawBasedMotionCompensationEnabled = false;
+	vr::HmdQuaternion_t _yawShellPivotFromCalibrationDeviceRotationOffset = { 1.0, 0.0, 0.0, 0.0 }; // YawVR shell pivot facing what the controller pointing, same up
+	vr::HmdVector3d_t _yawShellPivotFromCalibrationDeviceTranslationOffset = { 0.0, -0.10, 0.0 }; // YawVR shell pivot should be 10cm below the controller
+#endif
 
 	bool _motionCompensationZeroPoseValid = false;
 	vr::HmdVector3d_t _motionCompensationZeroPos;

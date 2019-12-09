@@ -47,8 +47,8 @@ void YawVRUdpClient::init() {
 	_udpClientThreadStopFlag = false;
 	_udpClientThread = std::thread(_udpClientThreadFunc, this);
 	LOG(DEBUG) << "YawVRUdpClient::init: thread created";
-	m_nextConnectionAttemptTime = boost::posix_time::microsec_clock::universal_time();
-	m_lastLogTime = boost::posix_time::microsec_clock::universal_time();
+	_nextConnectionAttemptTime = boost::posix_time::microsec_clock::universal_time();
+	_lastLogTime = boost::posix_time::microsec_clock::universal_time();
 }
 
 void YawVRUdpClient::shutdown() {
@@ -58,6 +58,11 @@ void YawVRUdpClient::shutdown() {
 		LOG(DEBUG) << "YawVRUdpClient::shutdown: waiting end of thread (joining)";
 		_udpClientThread.join();
 	}
+}
+
+void YawVRUdpClient::setYawSimulatorIPAddress(const std::string& ipAddress) {
+	this->_ipAddress = ipAddress;
+	_udpClientThreadShouldDisconnect = true;
 }
 
 YawVRPacket_t YawVRUdpClient::getLastPacket() {
@@ -103,7 +108,7 @@ void YawVRUdpClient::_udpClientThreadFunc(YawVRUdpClient* _this) {
 	try {
 		while (!_this->_udpClientThreadStopFlag) {
 			try {
-				if (sockfd == INVALID_SOCKET && boost::posix_time::microsec_clock::universal_time() > _this->m_nextConnectionAttemptTime) {
+				if (sockfd == INVALID_SOCKET && boost::posix_time::microsec_clock::universal_time() > _this->_nextConnectionAttemptTime) {
 					if (tcpSockfd == INVALID_SOCKET) {
 						LOG(TRACE) << "YawVRUdpClient::_udpClientThreadFunc: Connecting to YawVR on " << YAWVR_TCP_IP << ":" << YAWVR_TCP_PORT << " ...";
 						tcpSockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -180,8 +185,8 @@ void YawVRUdpClient::_udpClientThreadFunc(YawVRUdpClient* _this) {
 						try {
 							std::lock_guard<std::mutex> guard(_this->_mutex);
 							if (parsePacket(rcvBuffer, _this->m_lastPacket)) {
-								if (boost::posix_time::microsec_clock::universal_time() > _this->m_lastLogTime + boost::posix_time::milliseconds(1000)) {
-									_this->m_lastLogTime = boost::posix_time::microsec_clock::universal_time();
+								if (boost::posix_time::microsec_clock::universal_time() > _this->_lastLogTime + boost::posix_time::milliseconds(1000)) {
+									_this->_lastLogTime = boost::posix_time::microsec_clock::universal_time();
 									LOG(DEBUG) << "YawVRUdpClient::_udpClientThreadFunc: received packet : " << _this->m_lastPacket.getString();
 								}
 							}
@@ -199,6 +204,12 @@ void YawVRUdpClient::_udpClientThreadFunc(YawVRUdpClient* _this) {
 					}
 				}
 			} catch (std::exception& ex) {
+				_this->_udpClientThreadShouldDisconnect = true;
+				LOG(ERROR) << "YawVRUdpClient::_udpClientThreadFunc: Exception caught in YawVR UDP client receive loop !\n" << ex.what() << "\nNew attempt in " << YAWVR_CNX_ATTEMPT_DELAY_SEC << " seconds ...";
+				_this->_nextConnectionAttemptTime = boost::posix_time::microsec_clock::universal_time() + boost::posix_time::milliseconds(YAWVR_CNX_ATTEMPT_DELAY_SEC*1000);
+			}
+			if (_this->_udpClientThreadShouldDisconnect) {
+				_this->_udpClientThreadShouldDisconnect = false;
 				if (sockfd != INVALID_SOCKET) {
 					closesocket(sockfd);
 					sockfd = INVALID_SOCKET;
@@ -207,8 +218,6 @@ void YawVRUdpClient::_udpClientThreadFunc(YawVRUdpClient* _this) {
 					closesocket(tcpSockfd);
 					tcpSockfd = INVALID_SOCKET;
 				}
-				LOG(ERROR) << "YawVRUdpClient::_udpClientThreadFunc: Exception caught in YawVR UDP client receive loop !\n" << ex.what() << "\nNew attempt in " << YAWVR_CNX_ATTEMPT_DELAY_SEC << " seconds ...";
-				_this->m_nextConnectionAttemptTime = boost::posix_time::microsec_clock::universal_time() + boost::posix_time::milliseconds(YAWVR_CNX_ATTEMPT_DELAY_SEC*1000);
 			}
 			if (sockfd == INVALID_SOCKET) {
 				boost::this_thread::sleep(boost::posix_time::milliseconds(100));

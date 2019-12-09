@@ -9,20 +9,11 @@ MyStackViewPage {
 
     headerText: "Yaw Simulator Settings"
 
-    property int deviceIndex: -1
     property bool setupFinished: false
 
-    function setDeviceIndex(index) {
-        deviceIndex = index
-        updateDeviceInfo()
-        yawShellPivotFromCalibrationDeviceOffsetBox.updateGUI()
-    }
-
-    function updateDeviceInfo() {
-        if (deviceIndex >= 0) {
-            yawShellPivotFromCalibrationDeviceOffsetBox.updateValues()
-            yawBasedMotionCompensationEnableToggle.checked = DeviceManipulationTabController.yawBasedMotionCompensationEnabled(deviceIndex)
-        }
+    function updateInfo() {
+        yawBasedMotionCompensationEnableToggle.checked = DeviceManipulationTabController.yawBasedMotionCompensationEnabled(deviceIndex)
+        yawShellPivotFromCalibrationDeviceOffsetBox.updateValues()
     }
 
     content: ColumnLayout {
@@ -33,7 +24,7 @@ MyStackViewPage {
             text: "Enable Yaw based Motion Compensation"
             Layout.fillWidth: false
             onCheckedChanged: {
-                DeviceManipulationTabController.enableYawBasedMotionCompensation(deviceIndex, checked)
+                DeviceManipulationTabController.enableYawBasedMotionCompensation(checked)
             }
         }
 
@@ -42,27 +33,27 @@ MyStackViewPage {
             id: yawSimulatorIPAddressBox
             setIPAddress: function(part1, part2, part3, part4) {
                 if (deviceIndex >= 0) {
-                    DeviceManipulationTabController.setYawSimulatorIPAddress(deviceIndex, part1, part2, part3, part4)
+                    DeviceManipulationTabController.setYawSimulatorIPAddress(part1, part2, part3, part4)
                 }
             }
             updateValues: function() {
                 var hasChanged = false
-                var value = DeviceManipulationTabController.getYawSimulatorIPAddress(deviceIndex, 0)
+                var value = DeviceManipulationTabController.getYawSimulatorIPAddress(0)
                 if (part1 != value) {
                     part1 = value
                     hasChanged = true
                 }
-                value = DeviceManipulationTabController.getYawSimulatorIPAddress(deviceIndex, 1)
+                value = DeviceManipulationTabController.getYawSimulatorIPAddress(1)
                 if (part2 != value) {
                     part2 = value
                     hasChanged = true
                 }
-                value = DeviceManipulationTabController.getYawSimulatorIPAddress(deviceIndex, 2)
+                value = DeviceManipulationTabController.getYawSimulatorIPAddress(2)
                 if (part3 != value) {
                     part3 = value
                     hasChanged = true
                 }
-                value = DeviceManipulationTabController.getYawSimulatorIPAddress(deviceIndex, 3)
+                value = DeviceManipulationTabController.getYawSimulatorIPAddress(3)
                 if (part4 != value) {
                     part4 = value
                     hasChanged = true
@@ -78,42 +69,42 @@ MyStackViewPage {
             id: yawShellPivotFromCalibrationDeviceOffsetBox
             setTranslationOffset: function(x, y, z) {
                 if (deviceIndex >= 0) {
-                    DeviceManipulationTabController.setYawShellPivotFromCalibrationDeviceTranslationOffset(deviceIndex, x, y, z)
+                    DeviceManipulationTabController.setYawShellPivotFromCalibrationDeviceTranslationOffset(x, y, z)
                 }
             }
             setRotationOffset: function(yaw, pitch, roll) {
                 if (deviceIndex >= 0) {
-                    DeviceManipulationTabController.setYawShellPivotFromCalibrationDeviceRotationOffset(deviceIndex, yaw, pitch, roll)
+                    DeviceManipulationTabController.setYawShellPivotFromCalibrationDeviceRotationOffset(yaw, pitch, roll)
                 }
             }
             updateValues: function() {
                 var hasChanged = false
-                var value = DeviceManipulationTabController.getYawShellPivotFromCalibrationDeviceRotationOffset(deviceIndex, 0)
+                var value = DeviceManipulationTabController.getYawShellPivotFromCalibrationDeviceRotationOffset(0)
                 if (offsetYaw != value) {
                     offsetYaw = value
                     hasChanged = true
                 }
-                value = DeviceManipulationTabController.getYawShellPivotFromCalibrationDeviceRotationOffset(deviceIndex, 1)
+                value = DeviceManipulationTabController.getYawShellPivotFromCalibrationDeviceRotationOffset(1)
                 if (offsetPitch != value) {
                     offsetPitch = value
                     hasChanged = true
                 }
-                value = DeviceManipulationTabController.getYawShellPivotFromCalibrationDeviceRotationOffset(deviceIndex, 2)
+                value = DeviceManipulationTabController.getYawShellPivotFromCalibrationDeviceRotationOffset(2)
                 if (offsetRoll != value) {
                     offsetRoll = value
                     hasChanged = true
                 }
-                value = DeviceManipulationTabController.getYawShellPivotFromCalibrationDeviceTranslationOffset(deviceIndex, 0)
+                value = DeviceManipulationTabController.getYawShellPivotFromCalibrationDeviceTranslationOffset(0)
                 if (offsetX != value) {
                     offsetX = value
                     hasChanged = true
                 }
-                value = DeviceManipulationTabController.getYawShellPivotFromCalibrationDeviceTranslationOffset(deviceIndex, 1)
+                value = DeviceManipulationTabController.getYawShellPivotFromCalibrationDeviceTranslationOffset(1)
                 if (offsetY != value) {
                     offsetY = value
                     hasChanged = true
                 }
-                value = DeviceManipulationTabController.getYawShellPivotFromCalibrationDeviceTranslationOffset(deviceIndex, 2)
+                value = DeviceManipulationTabController.getYawShellPivotFromCalibrationDeviceTranslationOffset(2)
                 if (offsetZ != value) {
                     offsetZ = value
                     hasChanged = true
@@ -142,10 +133,8 @@ MyStackViewPage {
 
         Connections {
             target: DeviceManipulationTabController
-            onDeviceInfoChanged: {
-                if (index == deviceIndex) {
-                    updateDeviceInfo()
-                }
+            yawSimulatorSettingsChanged: {
+                updateInfo()
             }
         }
 
