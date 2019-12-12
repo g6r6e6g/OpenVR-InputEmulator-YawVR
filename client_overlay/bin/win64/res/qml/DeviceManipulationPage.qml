@@ -313,15 +313,15 @@ MyStackViewPage {
             spacing: 18
 
             MyPushButton {
-                id: yawSimulatorButton
+                id: yawVRSimulatorButton
                 enabled: false
                 activationSoundEnabled: false
                 Layout.preferredWidth: 548
-                text: "Yaw Simulator Settings"
+                text: "YawVR Simulator Settings"
                 onClicked: {
                     if (deviceSelectionComboBox.currentIndex >= 0) {
                         MyResources.playFocusChangedSound()
-                        var res = mainView.push(yawSimulatorPage)
+                        var res = mainView.push(yawVRSimulatorPage)
                     }
                 }
             }
@@ -467,7 +467,7 @@ MyStackViewPage {
             deviceModeSelectionComboBox.enabled = false
             deviceModeApplyButton.enabled = false
             motionCompensationButton.enabled = false
-            yawSimulatorButton.enabled = false
+            yawVRSimulatorButton.enabled = false
             deviceManipulationOffsetButton.enabled = false
             deviceInputRemappingButton.enabled = false
             deviceRenderModelButton.enabled = false
@@ -480,7 +480,7 @@ MyStackViewPage {
             deviceRenderModelButton.enabled = true
             deviceInputRemappingButton.enabled = true
             motionCompensationButton.enabled = true
-            yawSimulatorButton.enabled = true
+            yawVRSimulatorButton.enabled = true
             deviceModeApplyButton.enabled = true
             deviceIdentifyButton.enabled = true
             deviceManipulationNewProfileButton.enabled = true

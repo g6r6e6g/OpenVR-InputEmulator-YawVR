@@ -10,7 +10,7 @@
 #include "../logging.h"
 #include "../com/shm/driver_ipc_shm.h"
 #ifdef YAWVR
-#include "../yawvr/YawSimulatorUdpClient.h"
+#include "../yawvr/YawVRSimulatorUdpClient.h"
 #include "../yawvr/YawVRUnityTesterUdpClient.h"
 #endif
 #include "../devicemanipulation/MotionCompensationManager.h"
@@ -111,7 +111,7 @@ public:
 
 #ifdef YAWVR
 	/* Yaw simulator UDP client related */
-	YawSimulatorClient& yawSimulatorUdpClient() { return m_yawSimulatorUdpClient; }
+	YawVRSimulatorClient& yawVRSimulatorUdpClient() { return m_yawVRSimulatorUdpClient; }
 	/* YawVRUnityTester UDP client related */
 	YawVRUnityTesterUdpClient& yawVRUnityTesterUdpServer() { return m_yawVRUnityTesterUdpClient; }
 #endif
@@ -171,7 +171,7 @@ private:
 
 #ifdef YAWVR
 	//// Yaw simulator UDP client related ////
-	YawSimulatorClient m_yawSimulatorUdpClient;
+	YawVRSimulatorClient m_yawVRSimulatorUdpClient;
 	//// YawVRUnityTester UDP server related ////
 	YawVRUnityTesterUdpClient m_yawVRUnityTesterUdpClient;
 #endif

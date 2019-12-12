@@ -198,10 +198,10 @@ public:
 	void setMotionCompensationMovingAverageWindow(unsigned window, bool modal = true);
 
 #ifdef YAWVR
-	void enableYawBasedMotionCompensation(bool enable, bool modal = true);
-	void setYawSimulatorIPAddress(const std::string& ipAddress, bool modal = true);
-	void setYawShellPivotFromCalibrationDeviceRotationOffset(const vr::HmdQuaternion_t& value, bool modal = true);
-	void setYawShellPivotFromCalibrationDeviceTranslationOffset(const vr::HmdVector3d_t& value, bool modal = true);
+	void enableYawVRBasedMotionCompensation(bool enable, bool modal = true);
+	void setYawVRSimulatorIPAddress(const std::string& ipAddress, bool modal = true);
+	void setYawVRShellPivotFromCalibrationDeviceRotationOffset(const vr::HmdQuaternion_t& value, bool modal = true);
+	void setYawVRShellPivotFromCalibrationDeviceTranslationOffset(const vr::HmdVector3d_t& value, bool modal = true);
 #endif
 
 	void triggerHapticPulse(uint32_t deviceId, uint32_t axisId, uint16_t durationMicroseconds, bool directMode, bool modal = true);

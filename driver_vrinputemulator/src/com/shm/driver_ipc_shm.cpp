@@ -894,43 +894,43 @@ void IpcShmCommunicator::_ipcThreadFunc(IpcShmCommunicator* _this, ServerDriver 
 							break;
 
 #ifdef YAWVR
-						case ipc::RequestType::DeviceManipulation_SetYawSimulatorProperties:
+						case ipc::RequestType::DeviceManipulation_SetYawVRSimulatorProperties:
 						{
 							ipc::Reply resp(ipc::ReplyType::GenericReply);
-							resp.messageId = message.msg.dm_SetYawSimulatorProperties.messageId;
+							resp.messageId = message.msg.dm_SetYawVRSimulatorProperties.messageId;
 							auto serverDriver = ServerDriver::getInstance();
 							if (serverDriver) {
 								resp.status = ipc::ReplyStatus::Ok;
-								if (message.msg.dm_SetYawSimulatorProperties.enableYawBasedMotionCompensation > 0) {
-									serverDriver->motionCompensation().enableYawBasedMotionCompensation(message.msg.dm_SetYawSimulatorProperties.enableYawBasedMotionCompensation == 1 ? true : false);
+								if (message.msg.dm_SetYawVRSimulatorProperties.enableYawVRBasedMotionCompensation > 0) {
+									serverDriver->motionCompensation().enableYawVRBasedMotionCompensation(message.msg.dm_SetYawVRSimulatorProperties.enableYawVRBasedMotionCompensation == 1 ? true : false);
 								}
-								if (message.msg.dm_SetYawSimulatorProperties.yawSimulatorIPAddress[0] != 0) {
-									serverDriver->yawSimulatorUdpClient().setYawSimulatorIPAddress(message.msg.dm_SetYawSimulatorProperties.yawSimulatorIPAddress);
+								if (message.msg.dm_SetYawVRSimulatorProperties.yawVRSimulatorIPAddress[0] != 0) {
+									serverDriver->yawVRSimulatorUdpClient().setYawVRSimulatorIPAddress(message.msg.dm_SetYawVRSimulatorProperties.yawVRSimulatorIPAddress);
 								}
-								switch (message.msg.dm_SetYawSimulatorProperties.offsetOperation) {
+								switch (message.msg.dm_SetYawVRSimulatorProperties.offsetOperation) {
 								case 0:
-									if (message.msg.dm_SetYawSimulatorProperties.yawShellPivotFromCalibrationDeviceRotationOffsetValid) {
-										serverDriver->motionCompensation().yawShellPivotFromCalibrationDeviceRotationOffset() = message.msg.dm_SetYawSimulatorProperties.yawShellPivotFromCalibrationDeviceRotationOffset;
+									if (message.msg.dm_SetYawVRSimulatorProperties.yawVRShellPivotFromCalibrationDeviceRotationOffsetValid) {
+										serverDriver->motionCompensation().yawVRShellPivotFromCalibrationDeviceRotationOffset() = message.msg.dm_SetYawVRSimulatorProperties.yawVRShellPivotFromCalibrationDeviceRotationOffset;
 									}
-									if (message.msg.dm_SetYawSimulatorProperties.yawShellPivotFromCalibrationDeviceTranslationOffsetValid) {
-										serverDriver->motionCompensation().yawShellPivotFromCalibrationDeviceTranslationOffset() = message.msg.dm_SetYawSimulatorProperties.yawShellPivotFromCalibrationDeviceTranslationOffset;
+									if (message.msg.dm_SetYawVRSimulatorProperties.yawVRShellPivotFromCalibrationDeviceTranslationOffsetValid) {
+										serverDriver->motionCompensation().yawVRShellPivotFromCalibrationDeviceTranslationOffset() = message.msg.dm_SetYawVRSimulatorProperties.yawVRShellPivotFromCalibrationDeviceTranslationOffset;
 									}
 									break;
 								case 1:
-									if (message.msg.dm_SetYawSimulatorProperties.yawShellPivotFromCalibrationDeviceRotationOffsetValid) {
-										serverDriver->motionCompensation().yawShellPivotFromCalibrationDeviceRotationOffset() = message.msg.dm_SetYawSimulatorProperties.yawShellPivotFromCalibrationDeviceRotationOffset * serverDriver->motionCompensation().yawShellPivotFromCalibrationDeviceRotationOffset();
+									if (message.msg.dm_SetYawVRSimulatorProperties.yawVRShellPivotFromCalibrationDeviceRotationOffsetValid) {
+										serverDriver->motionCompensation().yawVRShellPivotFromCalibrationDeviceRotationOffset() = message.msg.dm_SetYawVRSimulatorProperties.yawVRShellPivotFromCalibrationDeviceRotationOffset * serverDriver->motionCompensation().yawVRShellPivotFromCalibrationDeviceRotationOffset();
 									}
-									if (message.msg.dm_SetYawSimulatorProperties.yawShellPivotFromCalibrationDeviceTranslationOffsetValid) {
-										serverDriver->motionCompensation().yawShellPivotFromCalibrationDeviceTranslationOffset() = serverDriver->motionCompensation().yawShellPivotFromCalibrationDeviceTranslationOffset() + message.msg.dm_SetYawSimulatorProperties.yawShellPivotFromCalibrationDeviceTranslationOffset;
+									if (message.msg.dm_SetYawVRSimulatorProperties.yawVRShellPivotFromCalibrationDeviceTranslationOffsetValid) {
+										serverDriver->motionCompensation().yawVRShellPivotFromCalibrationDeviceTranslationOffset() = serverDriver->motionCompensation().yawVRShellPivotFromCalibrationDeviceTranslationOffset() + message.msg.dm_SetYawVRSimulatorProperties.yawVRShellPivotFromCalibrationDeviceTranslationOffset;
 									}
 									break;
 								}
 							}
 							if (resp.status != ipc::ReplyStatus::Ok) {
-								LOG(ERROR) << "Error while setting Yaw Simulator properties: Error code " << (int)resp.status;
+								LOG(ERROR) << "Error while setting YawVR Simulator properties: Error code " << (int)resp.status;
 							}
 							if (resp.messageId != 0) {
-								_this->sendReply(message.msg.dm_SetYawSimulatorProperties.clientId, resp);
+								_this->sendReply(message.msg.dm_SetYawVRSimulatorProperties.clientId, resp);
 							}
 						}
 						break;

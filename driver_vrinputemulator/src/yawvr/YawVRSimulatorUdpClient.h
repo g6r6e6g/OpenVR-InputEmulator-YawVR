@@ -19,7 +19,7 @@ namespace vrinputemulator {
 
 namespace driver {
 
-struct YawSimulatorPacket_t {
+struct YawVRSimulatorPacket_t {
 	double simYaw, simPitch, simRoll;
 	double gameYaw, gamePitch, gameRoll;
 	double motorSpeed1, motorSpeed2, motorSpeed3;
@@ -31,22 +31,22 @@ struct YawSimulatorPacket_t {
 // forward declarations
 
 
-class YawSimulatorClient {
+class YawVRSimulatorClient {
 public:
 	void init();
 	void shutdown();
 
-	void setYawSimulatorIPAddress(const std::string& ipAddress);
+	void setYawVRSimulatorIPAddress(const std::string& ipAddress);
 	void connect() { _udpClientThreadShouldConnect = true; }
 	void disconnect() { _udpClientThreadShouldConnect = false; }
 	bool isConnected() { return _udpClientThreadConnected; }
 
-	YawSimulatorPacket_t getLastPacket();
+	YawVRSimulatorPacket_t getLastPacket();
 	vr::HmdQuaternion_t getSimRotation();
 
 private:
-	static void _udpClientThreadFunc(YawSimulatorClient* _this);
-	static bool parsePacket(const char* buffer, YawSimulatorPacket_t& yawSimulatorPacket);
+	static void _udpClientThreadFunc(YawVRSimulatorClient* _this);
+	static bool parsePacket(const char* buffer, YawVRSimulatorPacket_t& yawVRSimulatorPacket);
 
 	std::string _ipAddress;
 	std::thread _udpClientThread;
@@ -56,7 +56,7 @@ private:
 	volatile bool _udpClientThreadConnected = false;
 	boost::posix_time::ptime _nextConnectionAttemptTime;
 	std::mutex _mutex;
-	YawSimulatorPacket_t m_lastPacket;
+	YawVRSimulatorPacket_t m_lastPacket;
 	boost::posix_time::ptime _lastLogTime;
 };
 

@@ -51,7 +51,7 @@ enum class RequestType : uint32_t {
 	DeviceManipulation_TriggerHapticPulse,
 	DeviceManipulation_SetMotionCompensationProperties,
 #ifdef YAWVR
-	DeviceManipulation_SetYawSimulatorProperties,
+	DeviceManipulation_SetYawVRSimulatorProperties,
 #endif
 
 	InputRemapping_SetDigitalRemapping,
@@ -303,17 +303,17 @@ struct Request_DeviceManipulation_SetMotionCompensationProperties {
 };
 
 #ifdef YAWVR
-struct Request_DeviceManipulation_SetYawSimulatorProperties {
+struct Request_DeviceManipulation_SetYawVRSimulatorProperties {
 	uint32_t clientId;
 	uint32_t messageId; // Used to associate with Reply
-	uint32_t enableYawBasedMotionCompensation; // 0 .. don't change, 1 .. enable, 2 .. disable
-	char yawSimulatorIPAddress[16];
+	uint32_t enableYawVRBasedMotionCompensation; // 0 .. don't change, 1 .. enable, 2 .. disable
+	char yawVRSimulatorIPAddress[16];
 	uint32_t offsetOperation; // 0 .. set, 1 .. add
-	// Yaw simulator shell pivot from calibration device offsets
-	bool yawShellPivotFromCalibrationDeviceRotationOffsetValid;
-	vr::HmdQuaternion_t yawShellPivotFromCalibrationDeviceRotationOffset;
-	bool yawShellPivotFromCalibrationDeviceTranslationOffsetValid;
-	vr::HmdVector3d_t yawShellPivotFromCalibrationDeviceTranslationOffset;
+	// YawVR simulator shell pivot from calibration device offsets
+	bool yawVRShellPivotFromCalibrationDeviceRotationOffsetValid;
+	vr::HmdQuaternion_t yawVRShellPivotFromCalibrationDeviceRotationOffset;
+	bool yawVRShellPivotFromCalibrationDeviceTranslationOffsetValid;
+	vr::HmdVector3d_t yawVRShellPivotFromCalibrationDeviceTranslationOffset;
 };
 #endif
 
@@ -392,7 +392,7 @@ struct Request {
 		Request_DeviceManipulation_TriggerHapticPulse dm_triggerHapticPulse;
 		Request_DeviceManipulation_SetMotionCompensationProperties dm_SetMotionCompensationProperties;
 #ifdef YAWVR
-		Request_DeviceManipulation_SetYawSimulatorProperties dm_SetYawSimulatorProperties;
+		Request_DeviceManipulation_SetYawVRSimulatorProperties dm_SetYawVRSimulatorProperties;
 #endif
 		Request_InputRemapping_SetDigitalRemapping ir_SetDigitalRemapping;
 		Request_InputRemapping_GetDigitalRemapping ir_GetDigitalRemapping;

@@ -22,7 +22,7 @@ Rectangle {
         stackView: mainView
     }
 
-    property YawSimulatorPage yawSimulatorPage:  YawSimulatorPage {
+    property YawVRSimulatorPage yawVRSimulatorPage:  YawVRSimulatorPage {
         stackView: mainView
     }
 

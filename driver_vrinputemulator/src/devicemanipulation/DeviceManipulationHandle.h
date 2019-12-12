@@ -51,10 +51,10 @@ private:
 	vr::HmdQuaternion_t m_deviceRotationOffset = { 1.0, 0.0, 0.0, 0.0 };
 	vr::HmdVector3d_t m_deviceTranslationOffset = { 0.0, 0.0, 0.0 };
 #ifdef YAWVR
-	bool m_yawBasedMotionCompensationEnabled = false;
-	std::string m_yawSimulatorIPAddress;
-	vr::HmdQuaternion_t m_yawShellPivotFromCalibrationDeviceRotationOffset = { 1.0, 0.0, 0.0, 0.0 };
-	vr::HmdVector3d_t m_yawShellPivotFromCalibrationDeviceTranslationOffset = { 0.0, 0.0, 0.0 };
+	bool m_yawVRBasedMotionCompensationEnabled = false;
+	std::string m_yawVRSimulatorIPAddress;
+	vr::HmdQuaternion_t m_yawVRShellPivotFromCalibrationDeviceRotationOffset = { 1.0, 0.0, 0.0, 0.0 };
+	vr::HmdVector3d_t m_yawVRShellPivotFromCalibrationDeviceTranslationOffset = { 0.0, 0.0, 0.0 };
 #endif
 
 	struct DigitalInputRemappingInfo {
@@ -156,14 +156,14 @@ public:
 	const vr::HmdVector3d_t& deviceTranslationOffset() const { return m_deviceTranslationOffset; }
 	vr::HmdVector3d_t& deviceTranslationOffset() { return m_deviceTranslationOffset; }
 #ifdef YAWVR
-	bool isYawBasedMotionCompensationEnabled() const { return m_yawBasedMotionCompensationEnabled; }
-	void enableYawBasedMotionCompensation(bool enable) { m_yawBasedMotionCompensationEnabled = enable; }
-	const std::string& yawSimulatorIPAddress() const { return m_yawSimulatorIPAddress; }
-	void setYawSimulatorIPAddress(const std::string& ipAddress) { m_yawSimulatorIPAddress = ipAddress; }
-	const vr::HmdQuaternion_t& yawShellPivotFromCalibrationDeviceRotationOffset() const { return m_yawShellPivotFromCalibrationDeviceRotationOffset; }
-	vr::HmdQuaternion_t& yawShellPivotFromCalibrationDeviceRotationOffset() { return m_yawShellPivotFromCalibrationDeviceRotationOffset; }
-	const vr::HmdVector3d_t& yawShellPivotFromCalibrationDeviceTranslationOffset() const { return m_yawShellPivotFromCalibrationDeviceTranslationOffset; }
-	vr::HmdVector3d_t& yawShellPivotFromCalibrationDeviceTranslationOffset() { return m_yawShellPivotFromCalibrationDeviceTranslationOffset; }
+	bool isYawVRBasedMotionCompensationEnabled() const { return m_yawVRBasedMotionCompensationEnabled; }
+	void enableYawVRBasedMotionCompensation(bool enable) { m_yawVRBasedMotionCompensationEnabled = enable; }
+	const std::string& yawVRSimulatorIPAddress() const { return m_yawVRSimulatorIPAddress; }
+	void setYawVRSimulatorIPAddress(const std::string& ipAddress) { m_yawVRSimulatorIPAddress = ipAddress; }
+	const vr::HmdQuaternion_t& yawVRShellPivotFromCalibrationDeviceRotationOffset() const { return m_yawVRShellPivotFromCalibrationDeviceRotationOffset; }
+	vr::HmdQuaternion_t& yawVRShellPivotFromCalibrationDeviceRotationOffset() { return m_yawVRShellPivotFromCalibrationDeviceRotationOffset; }
+	const vr::HmdVector3d_t& yawVRShellPivotFromCalibrationDeviceTranslationOffset() const { return m_yawVRShellPivotFromCalibrationDeviceTranslationOffset; }
+	vr::HmdVector3d_t& yawVRShellPivotFromCalibrationDeviceTranslationOffset() { return m_yawVRShellPivotFromCalibrationDeviceTranslationOffset; }
 #endif
 
 	void setDigitalInputRemapping(uint32_t buttonId, const DigitalInputRemapping& remapping);

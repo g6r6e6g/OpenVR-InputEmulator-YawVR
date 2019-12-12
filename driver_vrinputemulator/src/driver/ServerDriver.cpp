@@ -16,7 +16,7 @@ std::string ServerDriver::installDir;
 
 
 #ifdef YAWVR
-ServerDriver::ServerDriver() : m_yawSimulatorUdpClient(), m_motionCompensation(this) {
+ServerDriver::ServerDriver() : m_yawVRSimulatorUdpClient(), m_motionCompensation(this) {
 #else
 ServerDriver::ServerDriver() : m_motionCompensation(this) {
 #endif
@@ -343,7 +343,7 @@ vr::EVRInitError ServerDriver::Init(vr::IVRDriverContext *pDriverContext) {
 
 #ifdef YAWVR
 	// Start Yaw simulator UDP client thread
-	m_yawSimulatorUdpClient.init();
+	m_yawVRSimulatorUdpClient.init();
 	// Start YawVRUnityTester UDP client thread
 	m_yawVRUnityTesterUdpClient.init();
 #endif
@@ -357,7 +357,7 @@ void ServerDriver::Cleanup() {
 	_driverContextHooks.reset();
 	MH_Uninitialize();
 #ifdef YAWVR
-	m_yawSimulatorUdpClient.shutdown();
+	m_yawVRSimulatorUdpClient.shutdown();
 	m_yawVRUnityTesterUdpClient.shutdown();
 #endif
 	shmCommunicator.shutdown();
@@ -379,9 +379,9 @@ void ServerDriver::RunFrame() {
 	m_motionCompensation.runFrame();
 
 #ifdef YAWVR
-	YawSimulatorPacket_t yawSimulatorPacket = m_yawSimulatorUdpClient.getLastPacket();
+	YawVRSimulatorPacket_t yawVRSimulatorPacket = m_yawVRSimulatorUdpClient.getLastPacket();
 	YawVRUnityTesterPacket_t* yawVRUnityTesterPacket = m_yawVRUnityTesterUdpClient.lockPacket();
-	yawVRUnityTesterPacket->simYawPitchRoll = { yawSimulatorPacket.simYaw, yawSimulatorPacket.simPitch, yawSimulatorPacket.simRoll };
+	yawVRUnityTesterPacket->simYawPitchRoll = { yawVRSimulatorPacket.simYaw, yawVRSimulatorPacket.simPitch, yawVRSimulatorPacket.simRoll };
 	m_yawVRUnityTesterUdpClient.unlockPacket();
 #endif
 }
