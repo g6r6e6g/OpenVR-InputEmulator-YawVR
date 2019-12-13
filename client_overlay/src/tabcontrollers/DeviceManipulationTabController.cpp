@@ -73,6 +73,16 @@ void DeviceManipulationTabController::initStage2(OverlayController * parent, QQu
 	} catch (const std::exception& e) {
 		LOG(ERROR) << "Could not get device infos: " << e.what();
 	}
+
+#ifdef YAWVR
+	// Apply loaded YawVR simulator settings
+	parent->vrInputEmulator().setYawVRShellPivotFromCalibrationDeviceTranslationOffset(yawVRShellPivotFromCalibrationDeviceTranslationOffset);
+	parent->vrInputEmulator().setYawVRShellPivotFromCalibrationDeviceRotationOffset(vrmath::quaternionFromYawPitchRoll(yawVRShellPivotFromCalibrationDeviceRotationOffset.v[0] * 0.01745329252, yawVRShellPivotFromCalibrationDeviceRotationOffset.v[1] * 0.01745329252, yawVRShellPivotFromCalibrationDeviceRotationOffset.v[2] * 0.01745329252));
+	std::ostringstream ipAddress;
+	ipAddress << yawVRSimulatorIPAddress.p[0] << "." << yawVRSimulatorIPAddress.p[1] << "." << yawVRSimulatorIPAddress.p[2] << "." << yawVRSimulatorIPAddress.p[3];
+	parent->vrInputEmulator().setYawVRSimulatorIPAddress(ipAddress.str());
+	parent->vrInputEmulator().enableYawVRBasedMotionCompensation(m_yawVRBasedMotionCompensationEnabled);
+#endif
 }
 
 
@@ -1244,7 +1254,7 @@ void DeviceManipulationTabController::setDriverFromHeadTranslationOffset(unsigne
 			deviceInfos[index]->driverFromHeadTranslationOffset.v[1] = y;
 			deviceInfos[index]->driverFromHeadTranslationOffset.v[2] = z;
 		} catch (const std::exception& e) {
-			LOG(ERROR) << "Exception caught while setting WorldFromDriver translation offset: " << e.what();
+			LOG(ERROR) << "Exception caught while setting DriverFromHead translation offset: " << e.what();
 		}
 		if (notify) {
 			updateDeviceInfo(index);
@@ -1278,7 +1288,7 @@ void DeviceManipulationTabController::setDriverTranslationOffset(unsigned index,
 			deviceInfos[index]->deviceTranslationOffset.v[1] = y;
 			deviceInfos[index]->deviceTranslationOffset.v[2] = z;
 		} catch (const std::exception& e) {
-			LOG(ERROR) << "Exception caught while setting WorldFromDriver translation offset: " << e.what();
+			LOG(ERROR) << "Exception caught while setting Driver translation offset: " << e.what();
 		}
 		if (notify) {
 			updateDeviceInfo(index);

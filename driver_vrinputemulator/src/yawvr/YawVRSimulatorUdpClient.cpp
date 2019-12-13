@@ -47,7 +47,7 @@ void YawVRSimulatorClient::init() {
 	_udpClientThreadStopFlag = false;
 	_udpClientThread = std::thread(_udpClientThreadFunc, this);
 	LOG(DEBUG) << "YawVRSimulatorUdpClient::init: thread created";
-	_udpClientThreadShouldConnect = false;
+	_connectionState = ConnectionState::Disconnected;
 	_nextConnectionAttemptTime = boost::posix_time::microsec_clock::universal_time();
 	_lastLogTime = boost::posix_time::microsec_clock::universal_time();
 }
@@ -60,10 +60,10 @@ void YawVRSimulatorClient::shutdown() {
 		_udpClientThread.join();
 	}
 }
-
 void YawVRSimulatorClient::setYawVRSimulatorIPAddress(const std::string& ipAddress) {
+	LOG(TRACE) << "YawVRSimulatorUdpClient::setYawVRSimulatorIPAddress( ipAddress : " << ipAddress << " )";
 	this->_ipAddress = ipAddress;
-	_udpClientThreadShouldConnect = false;
+	_connectionState = (ConnectionState)((uint8_t)_connectionState | (uint8_t)ConnectionState::Dirty);
 }
 
 YawVRSimulatorPacket_t YawVRSimulatorClient::getLastPacket() {
@@ -109,7 +109,7 @@ void YawVRSimulatorClient::_udpClientThreadFunc(YawVRSimulatorClient* _this) {
 	try {
 		while (!_this->_udpClientThreadStopFlag) {
 			try {
-				if (_this->_udpClientThreadShouldConnect && sockfd == INVALID_SOCKET && boost::posix_time::microsec_clock::universal_time() > _this->_nextConnectionAttemptTime) {
+				if (((uint8_t)_this->_connectionState & (uint8_t)ConnectionState::ShouldConnect) && sockfd == INVALID_SOCKET && boost::posix_time::microsec_clock::universal_time() > _this->_nextConnectionAttemptTime) {
 					if (tcpSockfd == INVALID_SOCKET) {
 						LOG(TRACE) << "YawVRSimulatorUdpClient::_udpClientThreadFunc: Connecting to YawVR simulator on " << _this->_ipAddress << ":" << YAWVRSIM_TCP_PORT << " ...";
 						tcpSockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -177,7 +177,8 @@ void YawVRSimulatorClient::_udpClientThreadFunc(YawVRSimulatorClient* _this) {
 						int err = WSAGetLastError();
 						throw std::runtime_error(boost::str(boost::format("Could not bind to YawVR simulator : Error code %d.") % err));
 					}
-					_this->_udpClientThreadConnected = (sockfd != INVALID_SOCKET);
+					_this->_connectionState = (ConnectionState)(((uint8_t)_this->_connectionState & ~(uint8_t)ConnectionState::Dirty) |
+						(uint8_t)(sockfd != INVALID_SOCKET ? ConnectionState::Connected : ConnectionState::Disconnected));
 					LOG(DEBUG) << "YawVRSimulatorUdpClient::_udpClientThreadFunc: Socket bound.";
 				}
 				if (sockfd != INVALID_SOCKET) {
@@ -206,19 +207,25 @@ void YawVRSimulatorClient::_udpClientThreadFunc(YawVRSimulatorClient* _this) {
 					}
 				}
 			} catch (std::exception& ex) {
-				_this->_udpClientThreadConnected = false;
-				LOG(ERROR) << "YawVRSimulatorUdpClient::_udpClientThreadFunc: Exception caught in YawVR simulator UDP client receive loop !\n" << ex.what() << "\nNew attempt in " << YAWVRSIM_CNX_ATTEMPT_DELAY_SEC << " seconds ...";
-				_this->_nextConnectionAttemptTime = boost::posix_time::microsec_clock::universal_time() + boost::posix_time::milliseconds(YAWVRSIM_CNX_ATTEMPT_DELAY_SEC*1000);
+				_this->_connectionState = (ConnectionState)((uint8_t)_this->_connectionState & ~(uint8_t)ConnectionState::Connected);
+				LOG(ERROR) << "YawVRSimulatorUdpClient::_udpClientThreadFunc: Exception caught in YawVR simulator UDP client receive loop !\n" << ex.what();
+				if ((uint8_t)_this->_connectionState & (uint8_t)ConnectionState::ShouldConnect) {
+					_this->_connectionState = (ConnectionState)((uint8_t)_this->_connectionState | (uint8_t)ConnectionState::Dirty);
+					LOG(TRACE) << "YawVRSimulatorUdpClient::_udpClientThreadFunc: New attempt in " << YAWVRSIM_CNX_ATTEMPT_DELAY_SEC << " seconds ...";
+					_this->_nextConnectionAttemptTime = boost::posix_time::microsec_clock::universal_time() + boost::posix_time::milliseconds(YAWVRSIM_CNX_ATTEMPT_DELAY_SEC * 1000);
+				}
 			}
-			if (!_this->_udpClientThreadShouldConnect || _this->_nextConnectionAttemptTime > boost::posix_time::microsec_clock::universal_time()) {
+			if ((!((uint8_t)_this->_connectionState & (uint8_t)ConnectionState::ShouldConnect) && ((uint8_t)_this->_connectionState & (uint8_t)ConnectionState::Dirty))) {
 				if (sockfd != INVALID_SOCKET) {
 					closesocket(sockfd);
 					sockfd = INVALID_SOCKET;
 				}
 				if (tcpSockfd != INVALID_SOCKET) {
+					LOG(TRACE) << "YawVRSimulatorUdpClient::_udpClientThreadFunc: Disconnecting from YawVR simulator";
 					closesocket(tcpSockfd);
 					tcpSockfd = INVALID_SOCKET;
 				}
+				_this->_connectionState = (ConnectionState)((uint8_t)_this->_connectionState & ~((uint8_t)ConnectionState::Dirty | (uint8_t)ConnectionState::Connected));
 			}
 			if (sockfd == INVALID_SOCKET) {
 				boost::this_thread::sleep(boost::posix_time::milliseconds(100));

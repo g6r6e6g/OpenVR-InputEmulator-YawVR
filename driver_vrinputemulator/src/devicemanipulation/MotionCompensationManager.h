@@ -42,7 +42,7 @@ public:
 	void setMotionCompensationMovingAverageWindow(unsigned window);
 #ifdef YAWVR
 	bool isYawVRBasedMotionCompensationEnabled() const { return _yawVRBasedMotionCompensationEnabled; }
-	void enableYawVRBasedMotionCompensation(bool enable) { _yawVRBasedMotionCompensationEnabled = enable; }
+	void enableYawVRBasedMotionCompensation(bool enable);
 	const vr::HmdQuaternion_t& yawVRShellPivotFromCalibrationDeviceRotationOffset() const { return _yawVRShellPivotFromCalibrationDeviceRotationOffset; }
 	vr::HmdQuaternion_t& yawVRShellPivotFromCalibrationDeviceRotationOffset() { return _yawVRShellPivotFromCalibrationDeviceRotationOffset; }
 	const vr::HmdVector3d_t& yawVRShellPivotFromCalibrationDeviceTranslationOffset() const { return _yawVRShellPivotFromCalibrationDeviceTranslationOffset; }

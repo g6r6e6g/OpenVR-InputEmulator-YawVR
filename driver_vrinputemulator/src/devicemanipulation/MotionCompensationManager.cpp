@@ -22,19 +22,6 @@ void MotionCompensationManager::enableMotionCompensation(bool enable) {
 			handle->setLastPoseTime(-1);
 		});
 	}
-#ifdef YAWVR
-	if (_yawVRBasedMotionCompensationEnabled) {
-		auto serverDriver = ServerDriver::getInstance();
-		if (serverDriver) {
-			if (enable) {
-				serverDriver->yawVRSimulatorUdpClient().connect();
-			}
-			else {
-				serverDriver->yawVRSimulatorUdpClient().disconnect();
-			}
-		}
-	}
-#endif
 }
 
 void MotionCompensationManager::setMotionCompensationRefDevice(DeviceManipulationHandle* device) {
@@ -98,6 +85,15 @@ bool MotionCompensationManager::_isMotionCompensationZeroPoseValid() {
 }
 
 #ifdef YAWVR
+void MotionCompensationManager::enableYawVRBasedMotionCompensation(bool enable) {
+	LOG(TRACE) << "MotionCompensationManager::enableYawVRBasedMotionCompensation( enable:" << enable << " )";
+	_yawVRBasedMotionCompensationEnabled = enable;
+	auto serverDriver = ServerDriver::getInstance();
+	if (serverDriver) {
+		serverDriver->yawVRSimulatorUdpClient().shouldConnect(_yawVRBasedMotionCompensationEnabled);
+	}
+}
+
 void MotionCompensationManager::_setMotionCompensationZeroPose(const vr::DriverPose_t& pose, const vr::HmdQuaternion_t& yawVRSimulatorRotation, DeviceManipulationHandle* deviceInfo) {
 	// convert pose from driver space to app space
 	auto tmpConj = vrmath::quaternionConjugate(pose.qWorldFromDriverRotation);

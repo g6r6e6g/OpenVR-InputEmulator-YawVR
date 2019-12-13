@@ -37,9 +37,12 @@ public:
 	void shutdown();
 
 	void setYawVRSimulatorIPAddress(const std::string& ipAddress);
-	void connect() { _udpClientThreadShouldConnect = true; }
-	void disconnect() { _udpClientThreadShouldConnect = false; }
-	bool isConnected() { return _udpClientThreadConnected; }
+	void shouldConnect(bool connect) {
+		_connectionState = (ConnectionState)(((uint8_t)_connectionState & ~(uint8_t)ConnectionState::ShouldConnect) |
+			(uint8_t)(connect ? ConnectionState::ShouldConnect : ConnectionState::Disconnected) |
+			((uint8_t)ConnectionState::Dirty));
+	}
+	bool isConnected() { return ((uint8_t)_connectionState & (uint8_t)ConnectionState::Connected); }
 
 	YawVRSimulatorPacket_t getLastPacket();
 	vr::HmdQuaternion_t getSimRotation();
@@ -52,8 +55,13 @@ private:
 	std::thread _udpClientThread;
 	volatile bool _udpClientThreadRunning = false;
 	volatile bool _udpClientThreadStopFlag = false;
-	volatile bool _udpClientThreadShouldConnect = false;
-	volatile bool _udpClientThreadConnected = false;
+	enum class ConnectionState : uint8_t {
+		Disconnected = 0x00,
+		Connected = 0x01,
+		ShouldConnect = Connected << 1,
+		Dirty = ShouldConnect << 1
+	};
+	volatile ConnectionState _connectionState = ConnectionState::Disconnected;
 	boost::posix_time::ptime _nextConnectionAttemptTime;
 	std::mutex _mutex;
 	YawVRSimulatorPacket_t m_lastPacket;
