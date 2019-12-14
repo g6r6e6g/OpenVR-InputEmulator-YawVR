@@ -41,12 +41,6 @@ struct DeviceManipulationProfile {
 	vr::HmdVector3d_t driverFromHeadRotationOffset;
 	vr::HmdVector3d_t driverTranslationOffset;
 	vr::HmdVector3d_t driverRotationOffset;
-/*TODEL #ifdef YAWVR
-	bool yawVRBasedMotionCompensationEnabled = false;
-	IPAddress_t yawVRSimulatorIPAddress = { 192, 168, 1, 104 };
-	vr::HmdVector3d_t yawVRShellPivotFromCalibrationDeviceTranslationOffset;
-	vr::HmdVector3d_t yawVRShellPivotFromCalibrationDeviceRotationOffset;
-#endif*/
 	bool includesInputRemapping = false;
 	std::map<int, DigitalInputRemappingProfile> digitalRemappingProfiles;
 	AnalogInputRemappingProfile analogRemappingProfiles[5];
@@ -67,12 +61,6 @@ struct DeviceInfo {
 	vr::HmdVector3d_t driverFromHeadTranslationOffset;
 	vr::HmdVector3d_t deviceRotationOffset;
 	vr::HmdVector3d_t deviceTranslationOffset;
-/*TODEL #ifdef YAWVR
-	bool yawVRBasedMotionCompensationEnabled;
-	IPAddress_t yawVRSimulatorIPAddress;
-	vr::HmdVector3d_t yawVRShellPivotFromCalibrationDeviceTranslationOffset;
-	vr::HmdVector3d_t yawVRShellPivotFromCalibrationDeviceRotationOffset;
-#endif*/
 	uint32_t renderModelIndex = 0;
 	vr::VROverlayHandle_t renderModelOverlay = vr::k_ulOverlayHandleInvalid;
 	std::string renderModelOverlayName;

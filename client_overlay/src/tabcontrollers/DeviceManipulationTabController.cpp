@@ -52,10 +52,6 @@ void DeviceManipulationTabController::initStage2(OverlayController * parent, QQu
 						parent->vrInputEmulator().getDeviceInfo(info->openvrId, info2);
 						info->deviceMode = info2.deviceMode;
 						info->deviceOffsetsEnabled = info2.offsetsEnabled;
-/*TODEL #ifdef YAWVR
-						info->yawVRBasedMotionCompensationEnabled = info2.yawVRBasedMotionCompensationEnabled;
-						// TODO yawVRSimulatorIPAddress ?
-#endif*/
 						if (info->deviceMode == 2 || info->deviceMode == 3) {
 							info->deviceStatus = info2.redirectSuspended ? 1 : 0;
 						}
@@ -76,7 +72,7 @@ void DeviceManipulationTabController::initStage2(OverlayController * parent, QQu
 
 #ifdef YAWVR
 	// Apply loaded YawVR simulator settings
-	parent->vrInputEmulator().setYawVRShellPivotFromCalibrationDeviceTranslationOffset(yawVRShellPivotFromCalibrationDeviceTranslationOffset);
+	parent->vrInputEmulator().setYawVRShellPivotFromCalibrationDeviceTranslationOffset({ yawVRShellPivotFromCalibrationDeviceTranslationOffset.v[0] * 0.01, yawVRShellPivotFromCalibrationDeviceTranslationOffset.v[1] * 0.01, yawVRShellPivotFromCalibrationDeviceTranslationOffset.v[2] * 0.01 });
 	parent->vrInputEmulator().setYawVRShellPivotFromCalibrationDeviceRotationOffset(vrmath::quaternionFromYawPitchRoll(yawVRShellPivotFromCalibrationDeviceRotationOffset.v[0] * 0.01745329252, yawVRShellPivotFromCalibrationDeviceRotationOffset.v[1] * 0.01745329252, yawVRShellPivotFromCalibrationDeviceRotationOffset.v[2] * 0.01745329252));
 	std::ostringstream ipAddress;
 	ipAddress << yawVRSimulatorIPAddress.p[0] << "." << yawVRSimulatorIPAddress.p[1] << "." << yawVRSimulatorIPAddress.p[2] << "." << yawVRSimulatorIPAddress.p[3];
@@ -126,10 +122,6 @@ void DeviceManipulationTabController::eventLoopTick(vr::TrackedDevicePose_t* dev
 							parent->vrInputEmulator().getDeviceInfo(info->openvrId, info2);
 							info->deviceMode = info2.deviceMode;
 							info->deviceOffsetsEnabled = info2.offsetsEnabled;
-/*TODEL #ifdef YAWVR
-							info->yawVRBasedMotionCompensationEnabled = info2.yawVRBasedMotionCompensationEnabled;
-							// TODO yawVRSimulatorIPAddress ?
-#endif*/
 							if (info->deviceMode == 2 || info->deviceMode == 3) {
 								info->deviceStatus = info2.redirectSuspended ? 1 : 0;
 							}
@@ -589,12 +581,6 @@ void DeviceManipulationTabController::saveDeviceManipulationProfiles() {
 			DEVICEMANIPULATIONSETTINGS_WRITEROTATIONVECTOR(driverFromHeadRotationOffset);
 			DEVICEMANIPULATIONSETTINGS_WRITETRANSLATIONVECTOR(driverTranslationOffset);
 			DEVICEMANIPULATIONSETTINGS_WRITEROTATIONVECTOR(driverRotationOffset);
-/*TODEL #ifdef YAWVR
-			settings->setValue("yawVRBasedMotionCompensationEnabled", p.yawVRBasedMotionCompensationEnabled);
-			DEVICEMANIPULATIONSETTINGS_WRITEIPADDRESS(yawVRSimulatorIPAddress);
-			DEVICEMANIPULATIONSETTINGS_WRITETRANSLATIONVECTOR(yawVRShellPivotFromCalibrationDeviceTranslationOffset);
-			DEVICEMANIPULATIONSETTINGS_WRITEROTATIONVECTOR(yawVRShellPivotFromCalibrationDeviceRotationOffset);
-#endif*/
 		}
 		settings->setValue("includesInputRemapping", p.includesInputRemapping);
 		if (p.includesInputRemapping) {
@@ -688,12 +674,6 @@ void DeviceManipulationTabController::addDeviceManipulationProfile(QString name,
 		profile->driverFromHeadRotationOffset = device->driverFromHeadRotationOffset;
 		profile->driverTranslationOffset = device->deviceTranslationOffset;
 		profile->driverRotationOffset = device->deviceRotationOffset;
-/*TODEL #ifdef YAWVR
-		profile->yawVRBasedMotionCompensationEnabled = device->yawVRBasedMotionCompensationEnabled;
-		profile->yawVRSimulatorIPAddress = device->yawVRSimulatorIPAddress;
-		profile->yawVRShellPivotFromCalibrationDeviceTranslationOffset = device->yawVRShellPivotFromCalibrationDeviceTranslationOffset;
-		profile->yawVRShellPivotFromCalibrationDeviceRotationOffset = device->yawVRShellPivotFromCalibrationDeviceRotationOffset;
-#endif*/
 	}
 	profile->includesInputRemapping = includesInputRemapping;
 	if (includesInputRemapping) {
@@ -775,12 +755,6 @@ void DeviceManipulationTabController::applyDeviceManipulationProfile(unsigned in
 			setDriverRotationOffset(deviceIndex, profile.driverRotationOffset.v[0], profile.driverRotationOffset.v[1], profile.driverRotationOffset.v[2], false);
 			setDriverTranslationOffset(deviceIndex, profile.driverTranslationOffset.v[0], profile.driverTranslationOffset.v[1], profile.driverTranslationOffset.v[2], false);
 			enableDeviceOffsets(deviceIndex, profile.deviceOffsetsEnabled, false);
-/*TODEL #ifdef YAWVR
-			setYawVRShellPivotFromCalibrationDeviceRotationOffset(deviceIndex, profile.yawVRShellPivotFromCalibrationDeviceRotationOffset.v[0], profile.yawVRShellPivotFromCalibrationDeviceRotationOffset.v[1], profile.yawVRShellPivotFromCalibrationDeviceRotationOffset.v[2], false);
-			setYawVRShellPivotFromCalibrationDeviceTranslationOffset(deviceIndex, profile.yawVRShellPivotFromCalibrationDeviceTranslationOffset.v[0], profile.yawVRShellPivotFromCalibrationDeviceTranslationOffset.v[1], profile.yawVRShellPivotFromCalibrationDeviceTranslationOffset.v[2], false);
-			enableYawVRBasedMotionCompensation(deviceIndex, profile.yawVRBasedMotionCompensationEnabled, false);
-			setYawVRSimulatorIPAddress(deviceIndex, profile.yawVRSimulatorIPAddress.p[0], profile.yawVRSimulatorIPAddress.p[1], profile.yawVRSimulatorIPAddress.p[2], profile.yawVRSimulatorIPAddress.p[3], false);
-#endif*/
 			updateDeviceInfo(deviceIndex);
 		}
 		if (profile.includesInputRemapping) {
@@ -1387,13 +1361,6 @@ bool DeviceManipulationTabController::updateDeviceInfo(unsigned index) {
 				deviceInfos[index]->deviceOffsetsEnabled = info.offsetsEnabled;
 				retval = true;
 			}
-/*TODEL #ifdef YAWVR
-			if (deviceInfos[index]->yawVRBasedMotionCompensationEnabled != info.yawVRBasedMotionCompensationEnabled) {
-				deviceInfos[index]->yawVRBasedMotionCompensationEnabled = info.yawVRBasedMotionCompensationEnabled;
-				retval = true;
-			}
-			// TODO yawVRSimulatorIPAddress ?
-#endif*/
 			if (deviceInfos[index]->deviceMode == 2 || deviceInfos[index]->deviceMode == 3) {
 				auto status = info.redirectSuspended ? 1 : 0;
 				if (deviceInfos[index]->deviceStatus != status) {

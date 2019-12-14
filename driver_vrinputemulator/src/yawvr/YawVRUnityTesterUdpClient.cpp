@@ -1,4 +1,4 @@
-#ifdef YAWVR
+#ifdef YAWVRUNITYTESTER
 #include "YawVRUnityTesterUdpClient.h"
 
 #define _WINSOCK_DEPRECATED_NO_WARNINGS

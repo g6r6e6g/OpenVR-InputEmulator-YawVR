@@ -12,11 +12,6 @@
 #include <boost/lexical_cast.hpp>
 #include "../driver/ServerDriver.h"
 
-/*TODEL #if YAWVRSIM_EMULATOR
-#define YAWVRSIM_TCP_IP						"192.168.1.18" // YawVR emulator, just launch the Unity Emulator app
-#else
-#define YAWVRSIM_TCP_IP						"192.168.1.28" // Real YawVR simulator device, start the Android appand start the device
-#endif*/
 #define YAWVRSIM_TCP_PORT					50020
 #define YAWVRSIM_UDP_PORT					28067
 #define YAWVRSIM_UDP_PORT_CHECKIN_GAME_NAME	"YawVRMotionCompensation"

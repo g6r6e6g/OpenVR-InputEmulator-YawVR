@@ -1,4 +1,4 @@
-#ifdef YAWVR
+#ifdef YAWVRUNITYTESTER
 #pragma once
 
 #include <thread>

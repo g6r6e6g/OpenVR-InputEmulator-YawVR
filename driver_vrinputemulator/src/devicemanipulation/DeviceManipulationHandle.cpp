@@ -76,7 +76,7 @@ AnalogInputRemapping DeviceManipulationHandle::getAnalogInputRemapping(uint32_t 
 bool DeviceManipulationHandle::handlePoseUpdate(uint32_t& unWhichDevice, vr::DriverPose_t& newPose, uint32_t unPoseStructSize) {
 	std::lock_guard<std::recursive_mutex> lock(_mutex);
 
-#ifdef YAWVR
+#ifdef YAWVRUNITYTESTER
 	auto serverDriver = ServerDriver::getInstance();
 	if (serverDriver) {
 		YawVRUnityTesterUdpClient& yawVRUnityTesterUdpClient = serverDriver->yawVRUnityTesterUdpServer();
@@ -121,7 +121,7 @@ bool DeviceManipulationHandle::handlePoseUpdate(uint32_t& unWhichDevice, vr::Dri
 		return false;
 
 	} else if (m_deviceMode == 5) { // motion compensation mode
-#ifndef YAWVR
+#ifndef YAWVRUNITYTESTER
 		auto serverDriver = ServerDriver::getInstance();
 #endif
 		if (serverDriver) {
@@ -130,7 +130,7 @@ bool DeviceManipulationHandle::handlePoseUpdate(uint32_t& unWhichDevice, vr::Dri
 				if (newPose.poseIsValid && newPose.result == vr::TrackingResult_Running_OK && serverDriver->yawVRSimulatorUdpClient().isConnected()) {
 					if (!m_motionCompensationManager._isMotionCompensationZeroPoseValid()) {
 						m_motionCompensationManager._setMotionCompensationStatus(MotionCompensationStatus::Running);
-						m_motionCompensationManager._setMotionCompensationZeroPose(newPose, serverDriver->yawVRSimulatorUdpClient().getSimRotation(), this);
+						m_motionCompensationManager._setMotionCompensationZeroPose(newPose, serverDriver->yawVRSimulatorUdpClient().getSimRotation()/*, this*/);
 						m_deviceMode = 0;
 						serverDriver->sendReplySetMotionCompensationMode(true);
 					}
@@ -140,7 +140,7 @@ bool DeviceManipulationHandle::handlePoseUpdate(uint32_t& unWhichDevice, vr::Dri
 				if (newPose.poseIsValid && newPose.result == vr::TrackingResult_Running_OK) {
 					m_motionCompensationManager._setMotionCompensationStatus(MotionCompensationStatus::Running);
 					if (!m_motionCompensationManager._isMotionCompensationZeroPoseValid()) {
-						m_motionCompensationManager._setMotionCompensationZeroPose(newPose, { 1.0, 0.0, 0.0, 0.0 }, this);
+						m_motionCompensationManager._setMotionCompensationZeroPose(newPose, { 1.0, 0.0, 0.0, 0.0 }/*, this*/);
 						serverDriver->sendReplySetMotionCompensationMode(true);
 					}
 					else {

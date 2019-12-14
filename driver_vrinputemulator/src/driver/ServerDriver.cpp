@@ -344,6 +344,8 @@ vr::EVRInitError ServerDriver::Init(vr::IVRDriverContext *pDriverContext) {
 #ifdef YAWVR
 	// Start Yaw simulator UDP client thread
 	m_yawVRSimulatorUdpClient.init();
+#endif
+#ifdef YAWVRUNITYTESTER
 	// Start YawVRUnityTester UDP client thread
 	m_yawVRUnityTesterUdpClient.init();
 #endif
@@ -358,6 +360,8 @@ void ServerDriver::Cleanup() {
 	MH_Uninitialize();
 #ifdef YAWVR
 	m_yawVRSimulatorUdpClient.shutdown();
+#endif
+#if YAWVRUNITYTESTER
 	m_yawVRUnityTesterUdpClient.shutdown();
 #endif
 	shmCommunicator.shutdown();
@@ -378,7 +382,7 @@ void ServerDriver::RunFrame() {
 	}
 	m_motionCompensation.runFrame();
 
-#ifdef YAWVR
+#ifdef YAWVRUNITYTESTER
 	YawVRSimulatorPacket_t yawVRSimulatorPacket = m_yawVRSimulatorUdpClient.getLastPacket();
 	YawVRUnityTesterPacket_t* yawVRUnityTesterPacket = m_yawVRUnityTesterUdpClient.lockPacket();
 	yawVRUnityTesterPacket->simYawPitchRoll = { yawVRSimulatorPacket.simYaw, yawVRSimulatorPacket.simPitch, yawVRSimulatorPacket.simRoll };

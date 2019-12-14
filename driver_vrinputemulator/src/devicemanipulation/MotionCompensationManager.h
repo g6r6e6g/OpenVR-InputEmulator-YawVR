@@ -51,12 +51,14 @@ public:
 	void _disableMotionCompensationOnAllDevices();
 	bool _isMotionCompensationZeroPoseValid();
 #ifdef YAWVR
-	void _setMotionCompensationZeroPose(const vr::DriverPose_t& pose, const vr::HmdQuaternion_t& yawVRSimulatorRotation, DeviceManipulationHandle* deviceInfo);
-	void _updateMotionCompensationRefPose(const vr::DriverPose_t& pose);
-	bool _applyMotionCompensation(vr::DriverPose_t& pose, const vr::HmdQuaternion_t& yawVRSimulatorRotation, DeviceManipulationHandle* deviceInfo);
+	void _setMotionCompensationZeroPose(const vr::DriverPose_t& pose, const vr::HmdQuaternion_t& yawVRSimulatorRotation/*, DeviceManipulationHandle* deviceInfo*/);
 #else
 	void _setMotionCompensationZeroPose(const vr::DriverPose_t& pose);
+#endif
 	void _updateMotionCompensationRefPose(const vr::DriverPose_t& pose);
+#ifdef YAWVR
+	bool _applyMotionCompensation(vr::DriverPose_t& pose, const vr::HmdQuaternion_t& yawVRSimulatorRotation, DeviceManipulationHandle* deviceInfo);
+#else
 	bool _applyMotionCompensation(vr::DriverPose_t& pose, DeviceManipulationHandle* deviceInfo);
 #endif
 
@@ -65,9 +67,6 @@ public:
 private:
 	ServerDriver* m_parent;
 
-/*TODEL #ifdef YAWVR
-	static vr::HmdVector3d_t ctrlr2YawVRSimulatorShellPivot; // controller to shell pivot offset
-#endif*/
 	bool _motionCompensationEnabled = false;
 	DeviceManipulationHandle* _motionCompensationRefDevice = nullptr;
 	MotionCompensationStatus _motionCompensationStatus = MotionCompensationStatus::WaitingForZeroRef;
