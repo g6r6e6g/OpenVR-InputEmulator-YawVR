@@ -346,3 +346,4 @@ ASALocalRun/
 /third-party/boost_1_71_0
 /build
 /openvr/*
+/installer/*.exe
