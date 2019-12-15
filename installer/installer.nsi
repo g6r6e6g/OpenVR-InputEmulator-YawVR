@@ -10,8 +10,8 @@
 	!define DRIVER_BASEDIR "..\driver_vrinputemulator"
 
 	;Name and file
-	Name "OpenVR Input Emulator"
-	OutFile "OpenVR-InputEmulator.exe"
+	Name "OpenVR Input Emulator (YawVR edition)"
+	OutFile "OpenVR-InputEmulator-YawVR.exe"
 	
 	;Default installation folder
 	InstallDir "$PROGRAMFILES64\OpenVR-InputEmulator"
@@ -75,7 +75,7 @@ Function .onInit
  
 	
 	MessageBox MB_OKCANCEL|MB_ICONEXCLAMATION \
-		"OpenVR Input Emulator is already installed. $\n$\nClick `OK` to upgrade the \
+		"OpenVR Input Emulator (YawVR edition) is already installed. $\n$\nClick `OK` to upgrade the \
 		existing installation or `Cancel` to cancel this upgrade." \
 		IDOK upgrade
 	Abort
