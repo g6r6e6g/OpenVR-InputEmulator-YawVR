@@ -883,6 +883,8 @@ Delete $INSTDIR\res\qml\MyDialogOkCancelPopup.qml
 Delete $INSTDIR\res\qml\MyDialogOkCancelPopup.qmlc
 Delete $INSTDIR\res\qml\MyDialogOkPopup.qml
 Delete $INSTDIR\res\qml\MyDialogOkPopup.qmlc
+Delete $INSTDIR\res\qml\MyIPAddressGroupBox.qml
+Delete $INSTDIR\res\qml\MyIPAddressGroupBox.qmlc
 Delete $INSTDIR\res\qml\MyOffsetGroupBox.qml
 Delete $INSTDIR\res\qml\MyOffsetGroupBox.qmlc
 Delete $INSTDIR\res\qml\MyPushButton.qml
@@ -904,9 +906,12 @@ Delete $INSTDIR\res\qml\MyTextField.qmlc
 Delete $INSTDIR\res\qml\MyToggleButton.qml
 Delete $INSTDIR\res\qml\MyToggleButton.qmlc
 Delete $INSTDIR\res\qml\qmldir
+Delete $INSTDIR\res\qml\YawVRSimulatorPage.qml
+Delete $INSTDIR\res\qml\YawVRSimulatorPage.qmlc
 Delete $INSTDIR\res\thumbicon.png
 Delete $INSTDIR\res\transparent.png
 Delete $INSTDIR\startdesktopmode.bat
+Delete $INSTDIR\vcredist_x64.exe
 RMdir $INSTDIR\res\qml
 RMdir $INSTDIR\res
 RMdir $INSTDIR\qtdata\translations
