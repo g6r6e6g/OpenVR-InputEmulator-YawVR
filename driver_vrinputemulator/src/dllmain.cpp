@@ -12,9 +12,9 @@ const char* logConfigDefault =
 "	MAX_LOG_FILE_SIZE = 2097152 ## 2MB\n"
 "* TRACE:\n"
 #ifdef YAWVR
-"	ENABLED = true\n"
+"	ENABLED = false\n"
 "* DEBUG:\n"
-"	ENABLED = true\n";
+"	ENABLED = false\n";
 #else
 "	ENABLED = false\n"
 "* DEBUG:\n"
