@@ -13,7 +13,7 @@
 #include "../driver/ServerDriver.h"
 
 #define YAWVRSIM_TCP_PORT					50020
-#define YAWVRSIM_UDP_PORT					28067
+#define YAWVRSIM_UDP_PORT					29067 // to avoid fighting same UDP port (28067) than YawVR config app launched on same computer
 #define YAWVRSIM_UDP_PORT_CHECKIN_GAME_NAME	"YawVRMotionCompensation"
 #define YAWVRSIM_CNX_ATTEMPT_DELAY_SEC		5
 #define YAWVRSIM_UDP_PACKET_MAXSIZE			256
@@ -96,7 +96,7 @@ void YawVRSimulatorClient::_udpClientThreadFunc(YawVRSimulatorClient* _this) {
 	SOCKET sockfd = INVALID_SOCKET;
 	SOCKADDR_IN sockAddr;
 	int addrLen = sizeof(sockAddr);
-	char rcvBuffer[YAWVRSIM_UDP_PORT];
+	char rcvBuffer[YAWVRSIM_UDP_PACKET_MAXSIZE];
 	int rcvSize;
 
 	_this->_udpClientThreadRunning = true;
@@ -138,6 +138,7 @@ void YawVRSimulatorClient::_udpClientThreadFunc(YawVRSimulatorClient* _this) {
 							if (err != WSAETIMEDOUT)
 								throw std::runtime_error(boost::str(boost::format("Could not send checkin request to YawVR simulator: Error code %d.") % err));
 						}
+						memset(rcvBuffer, 0, sizeof(rcvBuffer));
 						rcvSize = recv(tcpSockfd, rcvBuffer, sizeof(rcvBuffer) - 1, 0);
 						if (rcvSize != SOCKET_ERROR) {
 							rcvBuffer[rcvSize] = '\0';
@@ -160,7 +161,7 @@ void YawVRSimulatorClient::_udpClientThreadFunc(YawVRSimulatorClient* _this) {
 					struct timeval readTimeout;
 					readTimeout.tv_sec = 100;
 					readTimeout.tv_usec = 0;
-					if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, reinterpret_cast<char*>(&readTimeout), sizeof readTimeout) != 0) {
+					if (::setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, reinterpret_cast<char*>(&readTimeout), sizeof readTimeout) != 0) {
 						int err = WSAGetLastError();
 						throw std::runtime_error(boost::str(boost::format("Could not set timeout socket option: Error code %d.") % err));
 					}
@@ -177,6 +178,11 @@ void YawVRSimulatorClient::_udpClientThreadFunc(YawVRSimulatorClient* _this) {
 					LOG(DEBUG) << "YawVRSimulatorUdpClient::_udpClientThreadFunc: Socket bound.";
 				}
 				if (sockfd != INVALID_SOCKET) {
+					sockAddr.sin_family = AF_INET;
+					sockAddr.sin_port = htons(YAWVRSIM_UDP_PORT);
+					sockAddr.sin_addr.s_addr = INADDR_ANY;
+					addrLen = sizeof(sockAddr);
+					memset(rcvBuffer, 0, sizeof(rcvBuffer));
 					rcvSize = recvfrom(sockfd, rcvBuffer, sizeof(rcvBuffer) - 1, 0, (SOCKADDR*)&sockAddr, &addrLen);
 					if (rcvSize != SOCKET_ERROR) {
 						rcvBuffer[rcvSize] = '\0';
@@ -210,7 +216,7 @@ void YawVRSimulatorClient::_udpClientThreadFunc(YawVRSimulatorClient* _this) {
 					_this->_nextConnectionAttemptTime = boost::posix_time::microsec_clock::universal_time() + boost::posix_time::milliseconds(YAWVRSIM_CNX_ATTEMPT_DELAY_SEC * 1000);
 				}
 			}
-			if ((!((uint8_t)_this->_connectionState & (uint8_t)ConnectionState::ShouldConnect) && ((uint8_t)_this->_connectionState & (uint8_t)ConnectionState::Dirty))) {
+			if ((uint8_t)_this->_connectionState & (uint8_t)ConnectionState::Dirty) {
 				if (sockfd != INVALID_SOCKET) {
 					closesocket(sockfd);
 					sockfd = INVALID_SOCKET;
