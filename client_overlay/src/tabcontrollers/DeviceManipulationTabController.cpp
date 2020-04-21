@@ -78,6 +78,7 @@ void DeviceManipulationTabController::initStage2(OverlayController * parent, QQu
 	ipAddress << yawVRSimulatorIPAddress.p[0] << "." << yawVRSimulatorIPAddress.p[1] << "." << yawVRSimulatorIPAddress.p[2] << "." << yawVRSimulatorIPAddress.p[3];
 	parent->vrInputEmulator().setYawVRSimulatorIPAddress(ipAddress.str());
 	parent->vrInputEmulator().enableYawVRBasedMotionCompensation(m_yawVRBasedMotionCompensationEnabled);
+	parent->vrInputEmulator().enableYawVR3dofMode(m_yawVR3dofModeEnabled);
 #endif
 }
 
@@ -139,6 +140,44 @@ void DeviceManipulationTabController::eventLoopTick(vr::TrackedDevicePose_t* dev
 			if (newDeviceAdded) {
 				emit deviceCountChanged((unsigned)deviceInfos.size());
 			}
+#ifdef YAWVR
+			// Update according to YawVR Game Engine override
+			auto yawVRSimulatorProperties = parent->vrInputEmulator().getYawVRSimulatorProperties();
+			if (m_yawVRGameEngineOverriden != yawVRSimulatorProperties.yawVRGameEngineOverriden) {
+				m_yawVRGameEngineOverriden = yawVRSimulatorProperties.yawVRGameEngineOverriden;
+				if (m_yawVRGameEngineOverriden) {
+					m_yawVRBasedMotionCompensationEnabled = yawVRSimulatorProperties.yawVRGameEngineOverriden;
+					std::stringstream stringStream(yawVRSimulatorProperties.ipAddress);
+					std::string ipAddressPart;
+					std::vector<std::string> ipAddressParts;
+					while (std::getline(stringStream, ipAddressPart, '.')) {
+						if (ipAddressPart.find_first_not_of("0123456789") != std::string::npos)
+							continue;
+						ipAddressParts.push_back(ipAddressPart);
+					}
+					if (ipAddressParts.size() == 4) {
+						for (int p = 0; p < 4; ++p) {
+							yawVRSimulatorIPAddress.p[p] = std::stoi(ipAddressParts[p]);
+						}
+					}
+					m_yawVR3dofModeEnabled = yawVRSimulatorProperties.yawVRGameEngine3dofModeEnabled;
+					yawVRShellPivotFromCalibrationDeviceTranslationOffset = { 0.0, 0.0, 0.0 };
+					yawVRShellPivotFromCalibrationDeviceRotationOffset = { 0.0, 0.0, 0.0 };
+				}
+				else {
+					reloadYawVRSimulatorSettings();
+					// Apply loaded YawVR simulator settings
+					parent->vrInputEmulator().setYawVRShellPivotFromCalibrationDeviceTranslationOffset({ yawVRShellPivotFromCalibrationDeviceTranslationOffset.v[0] * 0.01, yawVRShellPivotFromCalibrationDeviceTranslationOffset.v[1] * 0.01, yawVRShellPivotFromCalibrationDeviceTranslationOffset.v[2] * 0.01 });
+					parent->vrInputEmulator().setYawVRShellPivotFromCalibrationDeviceRotationOffset(vrmath::quaternionFromYawPitchRoll(yawVRShellPivotFromCalibrationDeviceRotationOffset.v[0] * 0.01745329252, yawVRShellPivotFromCalibrationDeviceRotationOffset.v[1] * 0.01745329252, yawVRShellPivotFromCalibrationDeviceRotationOffset.v[2] * 0.01745329252));
+					std::ostringstream ipAddress;
+					ipAddress << yawVRSimulatorIPAddress.p[0] << "." << yawVRSimulatorIPAddress.p[1] << "." << yawVRSimulatorIPAddress.p[2] << "." << yawVRSimulatorIPAddress.p[3];
+					parent->vrInputEmulator().setYawVRSimulatorIPAddress(ipAddress.str());
+					parent->vrInputEmulator().enableYawVRBasedMotionCompensation(m_yawVRBasedMotionCompensationEnabled);
+					parent->vrInputEmulator().enableYawVR3dofMode(m_yawVR3dofModeEnabled);
+				}
+				emit yawVRSimulatorSettingsChanged();
+			}
+#endif
 		}
 	} else {
 		settingsUpdateCounter++;
@@ -282,6 +321,10 @@ unsigned DeviceManipulationTabController::getMotionCompensationMovingAverageWind
 }
 
 #ifdef YAWVR
+bool DeviceManipulationTabController::yawVRGameEngineOverriden() {
+	return m_yawVRGameEngineOverriden;
+}
+
 bool DeviceManipulationTabController::yawVRBasedMotionCompensationEnabled() {
 	return m_yawVRBasedMotionCompensationEnabled;
 }
@@ -293,6 +336,10 @@ int DeviceManipulationTabController::getYawVRSimulatorIPAddress(unsigned part) {
 	else {
 		return 0;
 	}
+}
+
+bool DeviceManipulationTabController::yawVR3dofModeEnabled() {
+	return m_yawVR3dofModeEnabled;
 }
 
 double DeviceManipulationTabController::getYawVRShellPivotFromCalibrationDeviceRotationOffset(unsigned axis) {
@@ -407,6 +454,7 @@ void DeviceManipulationTabController::reloadYawVRSimulatorSettings() {
 	settings->beginGroup("yawVRSimulatorSettings");
 	m_yawVRBasedMotionCompensationEnabled = settings->value("yawVRBasedMotionCompensationEnabled", false).toBool();
 	YAWVRSIMULATORSETTINGS_GETIPADDRESS(yawVRSimulatorIPAddress);
+	m_yawVR3dofModeEnabled = settings->value("yawVR3dofModeEnabled", false).toBool();
 	YAWVRSIMULATORSETTINGS_GETTRANSLATIONVECTOR(yawVRShellPivotFromCalibrationDeviceTranslationOffset);
 	YAWVRSIMULATORSETTINGS_GETROTATIONVECTOR(yawVRShellPivotFromCalibrationDeviceRotationOffset);
 	settings->endGroup();
@@ -436,6 +484,7 @@ void DeviceManipulationTabController::reloadDeviceManipulationProfiles() {
 /*#ifdef YAWVR
 			entry.yawVRBasedMotionCompensationEnabled = settings->value("yawVRBasedMotionCompensationEnabled", false).toBool();
 			DEVICEMANIPULATIONSETTINGS_GETIPADDRESS(yawVRSimulatorIPAddress);
+			entry.yawVR3dofModeEnabled = settings->value("yawVR3dofModeEnabled", false).toBool();
 			DEVICEMANIPULATIONSETTINGS_GETTRANSLATIONVECTOR(yawVRShellPivotFromCalibrationDeviceTranslationOffset);
 			DEVICEMANIPULATIONSETTINGS_GETROTATIONVECTOR(yawVRShellPivotFromCalibrationDeviceRotationOffset);
 #endif*/
@@ -534,6 +583,7 @@ void DeviceManipulationTabController::saveYawVRSimulatorSettings() {
 	settings->beginGroup("yawVRSimulatorSettings");
 	settings->setValue("yawVRBasedMotionCompensationEnabled", m_yawVRBasedMotionCompensationEnabled);
 	YAWVRSIMULATORSETTINGS_WRITEIPADDRESS(yawVRSimulatorIPAddress);
+	settings->setValue("yawVR3dofModeEnabled", m_yawVR3dofModeEnabled);
 	YAWVRSIMULATORSETTINGS_WRITETRANSLATIONVECTOR(yawVRShellPivotFromCalibrationDeviceTranslationOffset);
 	YAWVRSIMULATORSETTINGS_WRITEROTATIONVECTOR(yawVRShellPivotFromCalibrationDeviceRotationOffset);
 	settings->endGroup();
@@ -895,6 +945,17 @@ void DeviceManipulationTabController::enableYawVRBasedMotionCompensation(bool en
 	if (m_yawVRBasedMotionCompensationEnabled != enable) {
 		m_yawVRBasedMotionCompensationEnabled = enable;
 		parent->vrInputEmulator().enableYawVRBasedMotionCompensation(enable);
+		saveYawVRSimulatorSettings();
+		if (notify) {
+			emit yawVRSimulatorSettingsChanged();
+		}
+	}
+}
+
+void DeviceManipulationTabController::enableYawVR3dofMode(bool enable, bool notify) {
+	if (m_yawVR3dofModeEnabled != enable) {
+		m_yawVR3dofModeEnabled = enable;
+		parent->vrInputEmulator().enableYawVR3dofMode(enable);
 		saveYawVRSimulatorSettings();
 		if (notify) {
 			emit yawVRSimulatorSettingsChanged();

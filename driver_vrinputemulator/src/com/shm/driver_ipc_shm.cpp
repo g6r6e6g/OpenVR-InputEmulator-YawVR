@@ -894,6 +894,27 @@ void IpcShmCommunicator::_ipcThreadFunc(IpcShmCommunicator* _this, ServerDriver 
 							break;
 
 #ifdef YAWVR
+						case ipc::RequestType::DeviceManipulation_GetYawVRSimulatorProperties:
+						{
+							ipc::Reply resp(ipc::ReplyType::DeviceManipulation_GetYawVRSimulatorProperties);
+							resp.messageId = message.msg.dm_GetYawVRSimulatorProperties.messageId;
+							resp.status = ipc::ReplyStatus::Ok;
+							auto serverDriver = ServerDriver::getInstance();
+							YawVRSimulatorProperties yawVRSimulatorProperties;
+							yawVRSimulatorProperties.yawVRGameEngineOverriden = serverDriver->yawVRSimulatorUdpClient().isYawVRGameEngineOverriden();
+							yawVRSimulatorProperties.yawVRGameEngine3dofModeEnabled = serverDriver->yawVRSimulatorUdpClient().isYawVRGameEngine3dofModeEnabled();
+							std::string yawVRSimulatorIPAddress = serverDriver->yawVRSimulatorUdpClient().getYawVRSimulatorIPAddress();
+							yawVRSimulatorIPAddress.copy(yawVRSimulatorProperties.ipAddress, yawVRSimulatorIPAddress.size());
+							yawVRSimulatorProperties.ipAddress[yawVRSimulatorIPAddress.size()] = '\0';
+							yawVRSimulatorProperties.yawVRBasedMotionCompensationEnabled = serverDriver->motionCompensation().isYawVRBasedMotionCompensationEnabled();
+							resp.msg.dm_getYawVRSimulatorProperties.remapData = yawVRSimulatorProperties;
+							if (resp.status != ipc::ReplyStatus::Ok) {
+								LOG(ERROR) << "Error while getting YawVR simulator properties : Error code " << (int)resp.status;
+							}
+							if (resp.messageId != 0) {
+								_this->sendReply(message.msg.dm_GetYawVRSimulatorProperties.clientId, resp);
+							}
+						} break;
 						case ipc::RequestType::DeviceManipulation_SetYawVRSimulatorProperties:
 						{
 							ipc::Reply resp(ipc::ReplyType::GenericReply);
@@ -906,6 +927,9 @@ void IpcShmCommunicator::_ipcThreadFunc(IpcShmCommunicator* _this, ServerDriver 
 								}
 								if (message.msg.dm_SetYawVRSimulatorProperties.yawVRSimulatorIPAddress[0] != 0) {
 									serverDriver->yawVRSimulatorUdpClient().setYawVRSimulatorIPAddress(message.msg.dm_SetYawVRSimulatorProperties.yawVRSimulatorIPAddress);
+								}
+								if (message.msg.dm_SetYawVRSimulatorProperties.enableYawVR3dofMode > 0) {
+									serverDriver->motionCompensation().enableYawVR3dofMode(message.msg.dm_SetYawVRSimulatorProperties.enableYawVR3dofMode == 1 ? true : false);
 								}
 								switch (message.msg.dm_SetYawVRSimulatorProperties.offsetOperation) {
 								case 0:

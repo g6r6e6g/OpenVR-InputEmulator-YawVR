@@ -198,8 +198,10 @@ public:
 	void setMotionCompensationMovingAverageWindow(unsigned window, bool modal = true);
 
 #ifdef YAWVR
+	YawVRSimulatorProperties getYawVRSimulatorProperties();
 	void enableYawVRBasedMotionCompensation(bool enable, bool modal = true);
 	void setYawVRSimulatorIPAddress(const std::string& ipAddress, bool modal = true);
+	void enableYawVR3dofMode(bool enable, bool modal = true);
 	void setYawVRShellPivotFromCalibrationDeviceRotationOffset(const vr::HmdQuaternion_t& value, bool modal = true);
 	void setYawVRShellPivotFromCalibrationDeviceTranslationOffset(const vr::HmdVector3d_t& value, bool modal = true);
 #endif

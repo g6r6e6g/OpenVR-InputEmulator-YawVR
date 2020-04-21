@@ -1704,6 +1704,36 @@ void VRInputEmulator::setMotionCompensationMovingAverageWindow(unsigned window, 
 }
 
 #ifdef YAWVR
+YawVRSimulatorProperties VRInputEmulator::getYawVRSimulatorProperties() {
+	if (_ipcServerQueue) {
+		uint32_t messageId = _ipcRandomDist(_ipcRandomDevice);
+		ipc::Request message(ipc::RequestType::DeviceManipulation_GetYawVRSimulatorProperties);
+		message.msg.dm_GetYawVRSimulatorProperties.clientId = m_clientId;
+		message.msg.dm_GetYawVRSimulatorProperties.messageId = messageId;
+		std::promise<ipc::Reply> respPromise;
+		auto respFuture = respPromise.get_future();
+		{
+			std::lock_guard<std::recursive_mutex> lock(_mutex);
+			_ipcPromiseMap.insert({ messageId, std::move(respPromise) });
+		}
+		_ipcServerQueue->send(&message, sizeof(ipc::Request), 0);
+		auto resp = respFuture.get();
+		{
+			std::lock_guard<std::recursive_mutex> lock(_mutex);
+			_ipcPromiseMap.erase(messageId);
+		}
+		if (resp.status != ipc::ReplyStatus::Ok) {
+			std::stringstream ss;
+			ss << "Error while getting YawVR simulator properties: Error code " << (int)resp.status;
+			throw vrinputemulator_exception(ss.str(), (int)resp.status);
+		}
+		return resp.msg.dm_getYawVRSimulatorProperties.remapData;
+	}
+	else {
+		throw vrinputemulator_connectionerror("No active connection.");
+	}
+}
+
 void VRInputEmulator::enableYawVRBasedMotionCompensation(bool enable, bool modal) {
 	if (_ipcServerQueue) {
 		ipc::Request message(ipc::RequestType::DeviceManipulation_SetYawVRSimulatorProperties);
@@ -1751,14 +1781,60 @@ void VRInputEmulator::enableYawVRBasedMotionCompensation(bool enable, bool modal
 	}
 }
 
+void VRInputEmulator::enableYawVR3dofMode(bool enable, bool modal) {
+	if (_ipcServerQueue) {
+		ipc::Request message(ipc::RequestType::DeviceManipulation_SetYawVRSimulatorProperties);
+		memset(&message.msg, 0, sizeof(message.msg));
+		message.msg.dm_SetYawVRSimulatorProperties.clientId = m_clientId;
+		message.msg.dm_SetYawVRSimulatorProperties.messageId = 0;
+		message.msg.dm_SetYawVRSimulatorProperties.enableYawVR3dofMode = enable ? 1 : 2;
+		if (modal) {
+			uint32_t messageId = _ipcRandomDist(_ipcRandomDevice);
+			message.msg.dm_SetYawVRSimulatorProperties.messageId = messageId;
+			std::promise<ipc::Reply> respPromise;
+			auto respFuture = respPromise.get_future();
+			{
+				std::lock_guard<std::recursive_mutex> lock(_mutex);
+				_ipcPromiseMap.insert({ messageId, std::move(respPromise) });
+			}
+			_ipcServerQueue->send(&message, sizeof(ipc::Request), 0);
+			auto resp = respFuture.get();
+			{
+				std::lock_guard<std::recursive_mutex> lock(_mutex);
+				_ipcPromiseMap.erase(messageId);
+			}
+			std::stringstream ss;
+			ss << "Error while enabling YawVR 3DOF mode motion compensation: ";
+			if (resp.status == ipc::ReplyStatus::InvalidId) {
+				ss << "Invalid device id";
+				throw vrinputemulator_invalidid(ss.str());
+			}
+			else if (resp.status == ipc::ReplyStatus::NotFound) {
+				ss << "Device not found";
+				throw vrinputemulator_notfound(ss.str());
+			}
+			else if (resp.status != ipc::ReplyStatus::Ok) {
+				ss << "Error code " << (int)resp.status;
+				throw vrinputemulator_exception(ss.str());
+			}
+		}
+		else {
+			message.msg.dm_SetYawVRSimulatorProperties.messageId = 0;
+			_ipcServerQueue->send(&message, sizeof(ipc::Request), 0);
+		}
+	}
+	else {
+		throw vrinputemulator_connectionerror("No active connection.");
+	}
+}
+
 void VRInputEmulator::setYawVRSimulatorIPAddress(const std::string& ipAddress, bool modal) {
 	if (_ipcServerQueue) {
 		ipc::Request message(ipc::RequestType::DeviceManipulation_SetYawVRSimulatorProperties);
 		memset(&message.msg, 0, sizeof(message.msg));
 		message.msg.dm_SetYawVRSimulatorProperties.clientId = m_clientId;
 		message.msg.dm_SetYawVRSimulatorProperties.messageId = 0;
-		strncpy_s(message.msg.dm_SetYawVRSimulatorProperties.yawVRSimulatorIPAddress, ipAddress.c_str(), 15);
-		message.msg.dm_SetYawVRSimulatorProperties.yawVRSimulatorIPAddress[15] = '\0';
+		ipAddress.copy(message.msg.dm_SetYawVRSimulatorProperties.yawVRSimulatorIPAddress, ipAddress.size());
 		if (modal) {
 			uint32_t messageId = _ipcRandomDist(_ipcRandomDevice);
 			message.msg.dm_SetYawVRSimulatorProperties.messageId = messageId;

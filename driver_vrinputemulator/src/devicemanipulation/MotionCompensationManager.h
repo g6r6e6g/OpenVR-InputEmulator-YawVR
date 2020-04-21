@@ -41,6 +41,8 @@ public:
 	double motionCompensationMovingAverageWindow() { return m_motionCompensationMovingAverageWindow; }
 	void setMotionCompensationMovingAverageWindow(unsigned window);
 #ifdef YAWVR
+	bool isYawVR3dofModeEnabled() const { return _yawVR3dofModeEnabled; }
+	void enableYawVR3dofMode(bool enable);
 	bool isYawVRBasedMotionCompensationEnabled() const { return _yawVRBasedMotionCompensationEnabled; }
 	void enableYawVRBasedMotionCompensation(bool enable);
 	const vr::HmdQuaternion_t& yawVRShellPivotFromCalibrationDeviceRotationOffset() const { return _yawVRShellPivotFromCalibrationDeviceRotationOffset; }
@@ -78,6 +80,7 @@ private:
 	unsigned m_motionCompensationMovingAverageWindow = 3;
 #ifdef YAWVR
 	bool _yawVRBasedMotionCompensationEnabled = false;
+	bool _yawVR3dofModeEnabled = false;
 	vr::HmdQuaternion_t _yawVRShellPivotFromCalibrationDeviceRotationOffset = { 1.0, 0.0, 0.0, 0.0 }; // YawVR simulator shell pivot facing what the controller pointing, same up
 	vr::HmdVector3d_t _yawVRShellPivotFromCalibrationDeviceTranslationOffset = { 0.0, -0.10, 0.0 }; // YawVR simulator shell pivot should be 10cm below the controller
 #endif

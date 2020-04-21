@@ -51,6 +51,7 @@ enum class RequestType : uint32_t {
 	DeviceManipulation_TriggerHapticPulse,
 	DeviceManipulation_SetMotionCompensationProperties,
 #ifdef YAWVR
+	DeviceManipulation_GetYawVRSimulatorProperties,
 	DeviceManipulation_SetYawVRSimulatorProperties,
 #endif
 
@@ -78,6 +79,10 @@ enum class ReplyType : uint32_t {
 
 	DeviceManipulation_GetDeviceInfo,
 	DeviceManipulation_GetDeviceOffsets,
+
+#ifdef YAWVR
+	DeviceManipulation_GetYawVRSimulatorProperties,
+#endif
 
 	InputRemapping_GetDigitalRemapping,
 	InputRemapping_GetAnalogRemapping
@@ -303,11 +308,16 @@ struct Request_DeviceManipulation_SetMotionCompensationProperties {
 };
 
 #ifdef YAWVR
+struct Request_DeviceManipulation_GetYawVRSimulatorProperties {
+	uint32_t clientId;
+	uint32_t messageId; // Used to associate with Reply
+};
 struct Request_DeviceManipulation_SetYawVRSimulatorProperties {
 	uint32_t clientId;
 	uint32_t messageId; // Used to associate with Reply
 	uint32_t enableYawVRBasedMotionCompensation; // 0 .. don't change, 1 .. enable, 2 .. disable
 	char yawVRSimulatorIPAddress[16];
+	uint32_t enableYawVR3dofMode; // 0 .. don't change, 1 .. enable, 2 .. disable
 	uint32_t offsetOperation; // 0 .. set, 1 .. add
 	// YawVR simulator shell pivot from calibration device offsets
 	bool yawVRShellPivotFromCalibrationDeviceRotationOffsetValid;
@@ -392,6 +402,7 @@ struct Request {
 		Request_DeviceManipulation_TriggerHapticPulse dm_triggerHapticPulse;
 		Request_DeviceManipulation_SetMotionCompensationProperties dm_SetMotionCompensationProperties;
 #ifdef YAWVR
+		Request_DeviceManipulation_GetYawVRSimulatorProperties dm_GetYawVRSimulatorProperties;
 		Request_DeviceManipulation_SetYawVRSimulatorProperties dm_SetYawVRSimulatorProperties;
 #endif
 		Request_InputRemapping_SetDigitalRemapping ir_SetDigitalRemapping;
@@ -460,6 +471,12 @@ struct Reply_DeviceManipulation_GetDeviceOffsets {
 	vr::HmdVector3d_t deviceTranslationOffset;
 };
 
+#ifdef YAWVR
+struct Reply_DeviceManipulation_GetYawVRSimulatorProperties {
+	YawVRSimulatorProperties remapData;
+};
+#endif
+
 struct Reply_InputRemapping_GetDigitalRemapping {
 	uint32_t deviceId;
 	uint32_t buttonId;
@@ -494,6 +511,9 @@ struct Reply {
 		Reply_VirtualDevices_AddDevice vd_AddDevice;
 		Reply_DeviceManipulation_GetDeviceInfo dm_deviceInfo;
 		Reply_DeviceManipulation_GetDeviceOffsets dm_deviceOffsets;
+#ifdef YAWVR
+		Reply_DeviceManipulation_GetYawVRSimulatorProperties dm_getYawVRSimulatorProperties;
+#endif
 		Reply_InputRemapping_GetDigitalRemapping ir_getDigitalRemapping;
 		Reply_InputRemapping_GetAnalogRemapping ir_getAnalogRemapping;
 		MsgUnion() {}

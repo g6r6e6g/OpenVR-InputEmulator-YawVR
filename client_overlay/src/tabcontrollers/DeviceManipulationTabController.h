@@ -85,8 +85,10 @@ private:
 	unsigned motionCompensationMovingAverageWindow = 3;
 
 //#ifdef YAWVR
+	bool m_yawVRGameEngineOverriden = false;
 	bool m_yawVRBasedMotionCompensationEnabled = false;
 	vrinputemulator::IPAddress_t yawVRSimulatorIPAddress = { 192, 168, 1, 104 };
+	bool m_yawVR3dofModeEnabled = false;
 	vr::HmdVector3d_t yawVRShellPivotFromCalibrationDeviceTranslationOffset = { 0.0, -0.10, 0.0 }; // Yaw simulator shell pivot should be 10cm below the controller
 	vr::HmdVector3d_t yawVRShellPivotFromCalibrationDeviceRotationOffset = { 0.0, 0.0, 0.0 }; // Yaw simulator shell pivot facing what the controller pointing, same up
 //#endif
@@ -124,8 +126,10 @@ public:
 	Q_INVOKABLE double getMotionCompensationKalmanObservationNoise();
 	Q_INVOKABLE unsigned getMotionCompensationMovingAverageWindow();
 //#ifdef YAWVR
+	Q_INVOKABLE bool yawVRGameEngineOverriden();
 	Q_INVOKABLE bool yawVRBasedMotionCompensationEnabled();
 	Q_INVOKABLE int getYawVRSimulatorIPAddress(unsigned part);
+	Q_INVOKABLE bool yawVR3dofModeEnabled();
 	Q_INVOKABLE double getYawVRShellPivotFromCalibrationDeviceRotationOffset(unsigned axis);
 	Q_INVOKABLE double getYawVRShellPivotFromCalibrationDeviceTranslationOffset(unsigned axis);
 //#endif
@@ -192,6 +196,7 @@ public slots:
 //#ifdef YAWVR
 	void enableYawVRBasedMotionCompensation(bool enable, bool notify = true);
 	void setYawVRSimulatorIPAddress(int part1, int part2, int part3, int part4, bool notify = true);
+	void enableYawVR3dofMode(bool enable, bool notify = true);
 	void setYawVRShellPivotFromCalibrationDeviceRotationOffset(double yaw, double pitch, double roll, bool notify = true);
 	void setYawVRShellPivotFromCalibrationDeviceTranslationOffset(double x, double y, double z, bool notify = true);
 //#endif

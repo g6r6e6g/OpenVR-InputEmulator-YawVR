@@ -173,4 +173,14 @@ namespace vrinputemulator {
 	};
 
 
+#ifdef YAWVR
+	struct YawVRSimulatorProperties {
+		bool yawVRGameEngineOverriden;
+		bool yawVRGameEngine3dofModeEnabled;
+		char ipAddress[16];
+		bool yawVRBasedMotionCompensationEnabled;
+	};
+#endif
+
+
 } // end namespace vrinputemulator

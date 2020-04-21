@@ -21,9 +21,15 @@ const char* logConfigDefault =
 "	TO_STANDARD_OUTPUT = true\n"
 "	MAX_LOG_FILE_SIZE = 2097152 ## 2MB\n"
 "* TRACE:\n"
+#ifdef YAWVR
+"	ENABLED = true\n"
+"* DEBUG:\n"
+"	ENABLED = true\n";
+#else
 "	ENABLED = false\n"
 "* DEBUG:\n"
 "	ENABLED = false\n";
+#endif
 
 INITIALIZE_EASYLOGGINGPP
 

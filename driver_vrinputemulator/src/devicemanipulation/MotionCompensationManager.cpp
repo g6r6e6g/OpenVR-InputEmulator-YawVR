@@ -81,6 +81,11 @@ bool MotionCompensationManager::_isMotionCompensationZeroPoseValid() {
 }
 
 #ifdef YAWVR
+void MotionCompensationManager::enableYawVR3dofMode(bool enable) {
+	LOG(TRACE) << "MotionCompensationManager::enableYawVR3dofMode( enable:" << enable << " )";
+	_yawVR3dofModeEnabled = enable;
+}
+
 void MotionCompensationManager::enableYawVRBasedMotionCompensation(bool enable) {
 	LOG(TRACE) << "MotionCompensationManager::enableYawVRBasedMotionCompensation( enable:" << enable << " )";
 	_yawVRBasedMotionCompensationEnabled = enable;
@@ -94,11 +99,17 @@ void MotionCompensationManager::_setMotionCompensationZeroPose(const vr::DriverP
 	// convert pose from driver space to app space
 	auto tmpConj = vrmath::quaternionConjugate(pose.qWorldFromDriverRotation);
 	if (_yawVRBasedMotionCompensationEnabled) {
-		vr::HmdVector3d_t yawVRShellPivotPosition = vr::HmdVector3d_t{ pose.vecPosition[0], pose.vecPosition[1], pose.vecPosition[2] } + _yawVRShellPivotFromCalibrationDeviceTranslationOffset;
-		_motionCompensationZeroPos = vrmath::quaternionRotateVector(pose.qWorldFromDriverRotation, tmpConj, yawVRShellPivotPosition.v, true) - pose.vecWorldFromDriverTranslation;
-		vr::HmdQuaternion_t yawVRShellPivotRotation = pose.qRotation * _yawVRShellPivotFromCalibrationDeviceRotationOffset;
-		_motionCompensationZeroRot = tmpConj * yawVRShellPivotRotation;
-		_motionCompensationYawVRSimulatorZeroRot = yawVRSimulatorRotation;
+		if (_yawVR3dofModeEnabled) {
+			_motionCompensationZeroRot = vr::HmdQuaternion_t{ 1.0, 0.0, 0.0, 0.0 };
+			_motionCompensationYawVRSimulatorZeroRot = yawVRSimulatorRotation;
+		}
+		else {
+			vr::HmdVector3d_t yawVRShellPivotPosition = vr::HmdVector3d_t{ pose.vecPosition[0], pose.vecPosition[1], pose.vecPosition[2] } +_yawVRShellPivotFromCalibrationDeviceTranslationOffset;
+			_motionCompensationZeroPos = vrmath::quaternionRotateVector(pose.qWorldFromDriverRotation, tmpConj, yawVRShellPivotPosition.v, true) - pose.vecWorldFromDriverTranslation;
+			vr::HmdQuaternion_t yawVRShellPivotRotation = pose.qRotation * _yawVRShellPivotFromCalibrationDeviceRotationOffset;
+			_motionCompensationZeroRot = tmpConj * yawVRShellPivotRotation;
+			_motionCompensationYawVRSimulatorZeroRot = yawVRSimulatorRotation;
+		}
 	}
 	else {
 		_motionCompensationZeroPos = vrmath::quaternionRotateVector(pose.qWorldFromDriverRotation, tmpConj, pose.vecPosition, true) - pose.vecWorldFromDriverTranslation;
@@ -346,10 +357,12 @@ bool MotionCompensationManager::_applyMotionCompensation(vr::DriverPose_t& pose,
 
 		// convert back to driver space
 		pose.qRotation = pose.qWorldFromDriverRotation * compensatedPoseWorldRot;
-		auto adjPoseDriverPos = vrmath::quaternionRotateVector(pose.qWorldFromDriverRotation, tmpConj, compensatedPoseWorldPos + pose.vecWorldFromDriverTranslation);
-		pose.vecPosition[0] = adjPoseDriverPos.v[0];
-		pose.vecPosition[1] = adjPoseDriverPos.v[1];
-		pose.vecPosition[2] = adjPoseDriverPos.v[2];
+		if (!_yawVR3dofModeEnabled) {
+			auto adjPoseDriverPos = vrmath::quaternionRotateVector(pose.qWorldFromDriverRotation, tmpConj, compensatedPoseWorldPos + pose.vecWorldFromDriverTranslation);
+			pose.vecPosition[0] = adjPoseDriverPos.v[0];
+			pose.vecPosition[1] = adjPoseDriverPos.v[1];
+			pose.vecPosition[2] = adjPoseDriverPos.v[2];
+		}
 		if (compensatedPoseWorldVelValid) {
 			auto adjPoseDriverVel = vrmath::quaternionRotateVector(pose.qWorldFromDriverRotation, tmpConj, compensatedPoseWorldVel);
 			pose.vecVelocity[0] = adjPoseDriverVel.v[0];

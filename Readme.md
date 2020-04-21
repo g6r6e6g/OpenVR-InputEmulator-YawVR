@@ -31,6 +31,15 @@ This is a work-in-progress and may contain bugs.
 
 ![Yaw Simulator Settings Page](docs/screenshots/YawSimulatorPage.png)
 
+TODO add YawVR Game Engine support
+	check regularly the INI formatted file %APPDATA%\YawVR_GameEngine\OVRIE, if changed,
+	containing YawVR device IP address, if motion compensation is enabled or not
+	eg.	[YawVR_Game_Engine]
+		enabled=1
+		ipaddr=192.68.10.24
+		3dofModeEnabled=1
+TODO add 3DOF checkbox option to calibrate for 3DOF only without position tracking
+TODO add SteamVR pre-requisite in NSIS installer
 TODO debug sometimes after motion compensation apply on 1 ctrlr, zero pose seems totally shifted,
      workaround consists in changing Vel/Acc Compensation Mode from Disabled to Set Zero, Apply,
 	 then restore the Disabled Vel/Acc Compensation Mode

@@ -6,15 +6,28 @@
 //#include <Ws2tcpip.h>
 #define _USE_MATH_DEFINES
 #include <cmath>
+#include <boost/algorithm/string.hpp>
+#include <boost/filesystem/string_file.hpp>
 #include <boost/format.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/regex.hpp>
 #include <boost/lexical_cast.hpp>
 #include "../driver/ServerDriver.h"
 
+#define YAWVRGAMEENGINE_CFG_FILE_APPDATA_RELATIVE_PATH			"\\YawVR_GameEngine\\OVRIE"
+#define YAWVRGAMEENGINE_CFG_FILE_SECTION						"section"
+#define YAWVRGAMEENGINE_CFG_FILE_YAWVRGE_SECTION				"YawVR_Game_Engine"
+#define YAWVRGAMEENGINE_CFG_FILE_YAWVRGE_ENABLED				"enabled"
+#define YAWVRGAMEENGINE_CFG_FILE_YAWVRGE_IPADDR					"ipaddr"
+#define YAWVRGAMEENGINE_CFG_FILE_YAWVRGE_3DOFMODEENABLED		"3dofModeEnabled"
+#define YAWVRGAMEENGINE_CFG_FILE_YAWVRGESECTION_REGEX			"^[ ]*\\[(?<" ## YAWVRGAMEENGINE_CFG_FILE_SECTION ## ">.+)\\].*$"
+#define YAWVRGAMEENGINE_CFG_FILE_YAWVRGE_ENABLED_REGEX			"^[ ]*enabled[ ]*=[ ]*(?<" ## YAWVRGAMEENGINE_CFG_FILE_YAWVRGE_ENABLED ## ">[01]){1}.*$"
+#define YAWVRGAMEENGINE_CFG_FILE_YAWVRGE_IPADDR_REGEX			"^[ ]*ipaddr[ ]*=[ ]*(?<" ## YAWVRGAMEENGINE_CFG_FILE_YAWVRGE_IPADDR ## ">\\d+\\.\\d+\\.\\d+\\.\\d+).*$"
+#define YAWVRGAMEENGINE_CFG_FILE_YAWVRGE_3DOFMODEENABLED_REGEX	"^[ ]*3dofModeEnabled[ ]*=[ ]*(?<" ## YAWVRGAMEENGINE_CFG_FILE_YAWVRGE_3DOFMODEENABLED ## ">[01]){1}.*$"
+
 #define YAWVRSIM_TCP_PORT					50020
 #define YAWVRSIM_UDP_PORT					29067 // to avoid fighting same UDP port (28067) than YawVR config app launched on same computer
-#define YAWVRSIM_UDP_PORT_CHECKIN_GAME_NAME	"YawVRMotionCompensation"
+#define YAWVRSIM_UDP_PORT_CHECKIN_GAME_NAME	"YOVRIE" // standing for YawVR-OpenVR-Input-Emulator, old name was "YawVRMotionCompensation"
 #define YAWVRSIM_CNX_ATTEMPT_DELAY_SEC		5
 #define YAWVRSIM_UDP_PACKET_MAXSIZE			256
 #define YAWVRSIM_UDP_PACKET_SIMYAW			"simYaw"
@@ -39,6 +52,13 @@ std::string YawVRSimulatorPacket_t::getString() {
 
 void YawVRSimulatorClient::init() {
 	LOG(TRACE) << "YawVRSimulatorUdpClient::init";
+	try {
+		checkYawVRGameEngineConfig();
+	}
+	catch (std::exception & ex) {
+		LOG(ERROR) << "YawVRSimulatorUdpClient::init: Exception caught while checking YawVR Game Engine config !\n" << ex.what();
+	}
+	_yawVRGameEngineCfgFileLastWriteTime = (time_t)0;
 	_udpClientThreadStopFlag = false;
 	_udpClientThread = std::thread(_udpClientThreadFunc, this);
 	LOG(DEBUG) << "YawVRSimulatorUdpClient::init: thread created";
@@ -55,9 +75,98 @@ void YawVRSimulatorClient::shutdown() {
 		_udpClientThread.join();
 	}
 }
+
+void YawVRSimulatorClient::checkYawVRGameEngineConfig() {
+	LOG(DEBUG) << "YawVRSimulatorUdpClient::checkYawVRGameEngineConfig: checking YawVR Game Engine config ...";
+
+	_lastYawVRGameEngineCheckTime = boost::posix_time::microsec_clock::universal_time();
+
+	char* envValue;
+	size_t envValueLen;
+	errno_t err = _dupenv_s(&envValue, &envValueLen, "APPDATA");
+	std::string yawVRGameEngineCfgFile = boost::str(boost::format("%s" YAWVRGAMEENGINE_CFG_FILE_APPDATA_RELATIVE_PATH) % envValue);
+	if (!boost::filesystem::exists(yawVRGameEngineCfgFile)) {
+		LOG(DEBUG) << "YawVRSimulatorUdpClient::checkYawVRGameEngineConfig: file " << yawVRGameEngineCfgFile << " missing, no config read.";
+		return;
+	}
+
+	LOG(DEBUG) << "YawVRSimulatorUdpClient::checkYawVRGameEngineConfig: checking last write of file " << yawVRGameEngineCfgFile;
+	time_t yawVRGameEngineCfgFileLastWriteTime = boost::filesystem::last_write_time(yawVRGameEngineCfgFile);
+	if (yawVRGameEngineCfgFileLastWriteTime <= _yawVRGameEngineCfgFileLastWriteTime) {
+		LOG(DEBUG) << "YawVRSimulatorUdpClient::checkYawVRGameEngineConfig: file " << yawVRGameEngineCfgFile << " unchanged, no config read.";
+		return;
+	}
+
+	LOG(TRACE) << "YawVRSimulatorUdpClient::checkYawVRGameEngineConfig: reading file " << yawVRGameEngineCfgFile;
+	std::string cfgText;
+	boost::filesystem::load_string_file(yawVRGameEngineCfgFile, cfgText);
+	LOG(TRACE) << "YawVRSimulatorUdpClient::checkYawVRGameEngineConfig: read config :\n" << cfgText;
+
+	boost::regex sectionRegEx(YAWVRGAMEENGINE_CFG_FILE_YAWVRGESECTION_REGEX);
+	boost::regex yawVRGEEnabledRegEx(YAWVRGAMEENGINE_CFG_FILE_YAWVRGE_ENABLED_REGEX);
+	boost::regex yawVRGEIpAddrRegEx(YAWVRGAMEENGINE_CFG_FILE_YAWVRGE_IPADDR_REGEX);
+	boost::regex yawVRGE3dofModeEnabledRegEx(YAWVRGAMEENGINE_CFG_FILE_YAWVRGE_3DOFMODEENABLED_REGEX);
+	std::vector<std::string> lines;
+	boost::split(lines, cfgText, boost::is_any_of("\n"));
+	for (int pass = 0; pass < 2; ++pass) {
+		bool yawVRGESectionFound = false;
+		for (std::vector<std::string>::const_iterator it = lines.begin(); it != lines.end(); ++it) {
+			boost::smatch match;
+			if (boost::regex_search(*it, match, sectionRegEx)) {
+				std::string section = match[YAWVRGAMEENGINE_CFG_FILE_SECTION];
+				if (!yawVRGESectionFound) {
+					yawVRGESectionFound = (section == YAWVRGAMEENGINE_CFG_FILE_YAWVRGE_SECTION);
+					continue;
+				}
+				break;
+			}
+			switch (pass) {
+			case 0: {
+				if (boost::regex_search(*it, match, yawVRGEEnabledRegEx)) {
+					int enabled = boost::lexical_cast<int>(match[YAWVRGAMEENGINE_CFG_FILE_YAWVRGE_ENABLED]);
+					if ((bool)enabled != _yawVRGameEngineOverride) {
+						yawVRGameEngineOverride(enabled);
+					}
+					if ((bool)enabled != (bool)((uint8_t)_connectionState & (uint8_t)ConnectionState::ShouldConnect)) {
+						shouldConnect(enabled);
+					}
+				}
+				break;
+			}
+			default: {
+				if (_yawVRGameEngineOverride && boost::regex_search(*it, match, yawVRGEIpAddrRegEx)) {
+					std::string ipAddr = match[YAWVRGAMEENGINE_CFG_FILE_YAWVRGE_IPADDR];
+					if (ipAddr != _ipAddress) {
+						setYawVRSimulatorIPAddress(ipAddr);
+					}
+				}
+				if (_yawVRGameEngineOverride && boost::regex_search(*it, match, yawVRGE3dofModeEnabledRegEx)) {
+					int enabled = boost::lexical_cast<int>(match[YAWVRGAMEENGINE_CFG_FILE_YAWVRGE_3DOFMODEENABLED]);
+LOG(TRACE) << "zzzzzzzzzzzzzzzzzzzzzzzzzzzzz enabled : " << (enabled ? "true" : "false") << " _yawVRGameEngine3dofModeEnabled : " << (_yawVRGameEngine3dofModeEnabled ? "true" : "false");
+					if ((bool)enabled != _yawVRGameEngine3dofModeEnabled) {
+						enableYawVRGameEngine3dofMode(enabled);
+					}
+				}
+				break;
+			}
+			}
+		}
+	}
+}
+
+void YawVRSimulatorClient::yawVRGameEngineOverride(bool override) {
+	LOG(TRACE) << "YawVRSimulatorUdpClient::yawVRGameEngineOverride( override : " << (override ? "true" : "false") << " )";
+	_yawVRGameEngineOverride = override;
+}
+
+void YawVRSimulatorClient::enableYawVRGameEngine3dofMode(bool enable) {
+	LOG(TRACE) << "YawVRSimulatorUdpClient::enableYawVRGameEngine3dofMode( enable : " << (enable ? "true" : "false") << " )";
+	_yawVRGameEngine3dofModeEnabled = enable;
+}
+
 void YawVRSimulatorClient::setYawVRSimulatorIPAddress(const std::string& ipAddress) {
 	LOG(TRACE) << "YawVRSimulatorUdpClient::setYawVRSimulatorIPAddress( ipAddress : " << ipAddress << " )";
-	this->_ipAddress = ipAddress;
+	_ipAddress = ipAddress;
 	_connectionState = (ConnectionState)((uint8_t)_connectionState | (uint8_t)ConnectionState::Dirty);
 }
 
@@ -103,6 +212,14 @@ void YawVRSimulatorClient::_udpClientThreadFunc(YawVRSimulatorClient* _this) {
 	LOG(DEBUG) << "YawVRSimulatorUdpClient::_udpClientThreadFunc: thread started";
 	try {
 		while (!_this->_udpClientThreadStopFlag) {
+			if (boost::posix_time::microsec_clock::universal_time() > _this->_lastYawVRGameEngineCheckTime + boost::posix_time::milliseconds(1000)) {
+				try {
+//					_this->checkYawVRGameEngineConfig();
+				}
+				catch (std::exception & ex) {
+					LOG(ERROR) << "YawVRSimulatorUdpClient::_udpClientThreadFunc: Exception caught while checking YawVR Game Engine config !\n" << ex.what();
+				}
+			}
 			try {
 				if (((uint8_t)_this->_connectionState & (uint8_t)ConnectionState::ShouldConnect) && sockfd == INVALID_SOCKET && boost::posix_time::microsec_clock::universal_time() > _this->_nextConnectionAttemptTime) {
 					if (tcpSockfd == INVALID_SOCKET) {
