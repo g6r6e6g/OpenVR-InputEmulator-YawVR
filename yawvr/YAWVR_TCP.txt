@@ -1,0 +1,188 @@
+TCP port
+
+first byte: 0x30
+
+2-3-4-5 bytes:   An integer number, the port, you're listening on for the simulator data
+6-... bytes: an ASCII string, name of the game
+
+
+theres a bug in the firmware, it ignores the udp port you sent when you check in on tcp.
+It only sends on 28067
+The emulator is not ignoring the port number though, so it is working as expected.
+
+
+
+
+
+
+
+
+
+
+DánielHier à 19:02
+Hi
+ 
+DánielHier à 19:09
+Zsolt talked to me about the problem you have
+For the 2. problem, there is a difference unfortunately with the real simulator, and the emulator
+for a real device, you have to send data in this form YS[<Axis1a>]P[<Axis2a>]R[<Axis3a>]B[12]
+the simulator will know, that the data is from simsools because of the S after the Y
+and the B parameter is the bit range. the sim has to know the bitrange, so it can process the data from simtools
+but its a bit different on the emulator
+in the emulator, you dont need the S after the Y, instead, you have to tick the "Using SimTools" checkbox, and fill in the bit range under it
+For the first problem, im not really sure what you mean.
+However, I know, that rotation respond is not supported yet on simtools
+I mean, the simulator wont send back its rotation, unless you check in with TCP
+ 
+DánielHier à 19:37
+Im working on it though.. there will be a UDP message you have to send before the actual gamedata, and the simu will register you as a game
+ 
+g6r6e6gHier à 19:41
+Hi, @Dániel thank youn for responses. So meanwhile I get my device I will use the emulator packet format Y param without B param.
+ 
+DánielHier à 19:42
+yeah, and be sure to tick the using simtools check
+ 
+g6r6e6gHier à 19:42
+Yes I ticked it
+About my cnx pb, you mean I have to connect to emulator in TCP instead of UDP in order to get YawVR orientation data ?
+ 
+DánielHier à 19:43
+yes
+ 
+g6r6e6gHier à 19:44
+Ok and the packet format I will receive is the same as the format sent by SimTools ?
+ 
+DánielHier à 19:44
+what do you mean?
+oh
+it will be Y[]P[]R[]
+ 
+g6r6e6gHier à 19:44
+Ok
+ 
+DánielHier à 19:45
+you have to send a specific message on tcp, though.
+ 
+g6r6e6gHier à 19:45
+I don't have this protocol spec ...
+ 
+DánielHier à 19:46
+yeah, we are pretty lack of documentation, unfortunately
+ 
+g6r6e6gHier à 19:46
+I only have the "YAW VR  udp packet to game app" protocol
+SY[%1.2hf]SP[%1.2hf]SR[%1.2hf]GY[%1.2hf]GP[%1.2hf]GR[%1.2hf]  (SIMULATOR YAW) (SIMULATOR PITCH) (SIMULATOR ROLL) (GAME YAW) (GAME PITCH) (GAME ROLL)
+S1[%0.0hf]S2[%0.0hf]S3[%0.0hf]U[%1.2hf]     (1-2-3 MOTOR SPEED)      (4 BATTERY LEVEL)
+ 
+DánielHier à 19:47
+yeah, this will be changed, too i think
+well
+I dont think a game needs this much data, only the first 3
+ 
+g6r6e6gHier à 19:49
+Yes I think so, in my case too, ok could you give me a exchange sample on TCP in order I'm able to get Y, P, R angles ?
+ 
+DánielHier à 19:49
+If you want, tomorrow i can send you a new emulator build, where you can set where you want to send the simulator rotation back
+the tcp checkin looks like this:
+ 
+g6r6e6gHier à 19:51
+For instance I'm able to control the emulator with SimTools, no problem. I just need some protocol infos to connect to emulator and receive Yaw, Pitch, Roll angles and use them to compensate this motion orientation into VR headset orientation
+ 
+DánielHier à 19:51
+first byte: 0x30
+
+2-3-4-5 bytes:   An integer number, the port, you're listening on for the simulator data
+6-... bytes: an ASCII string, name of the game
+ 
+g6r6e6gHier à 19:53
+ok I will try to send that on TCP to emulator, I will first make a simple Python tester script
+thank you so much, can I disturb you in the future if I need some more help ?
+ 
+DánielHier à 20:00
+Of course.
+
+
+
+
+DánielAujourd’hui à 19:26
+Hi, Im sorry, I just want to say, that theres a bug in the firmware, it ignores the udp port you sent when you check in on tcp.
+It only sends on 28067
+ 
+DánielAujourd’hui à 19:48
+The emulator is not ignoring the port number though, so it is working as expected.
+ 
+g6r6e6gAujourd’hui à 20:54
+Hi @Dániel thank you for these informations. I'm using emulator for instance. I will ask for the UDP port 28067 so it will work in all cases.
+
+
+
+
+g6r6e6g11/10/2019
+Hello @Dániel,
+
+I've suceeded to connect to Emulator on TCP port to request checkin on UDP port 28067,
+but after the reception of TCP response "1AVAILABLE", the SimTools Output Testing seems disconnected from Emulator so I cannot move anymore the YawVR through SimTools and I do not receive anything on UDP port 28067.
+
+thank you for your help
+greg
+Step1 : SimTools cnx OK
+
+Step2 : I can move YawVR
+
+Step 3 : my python test script connect to TCP 50020 and request the checkin UDP 28067
+
+Step 4 : I cannot move YawVR anymore, I do not receive anything on my python test script (UDP port 28067)
+
+ 
+g6r6e6g11/10/2019
+Emulator displays : ACTUAL_POS;320.09;000.00;000.00
+It does not match to the format Y[]P[]R[] you give me :wink: 
+(but I do not receive it for instance)
+ 
+Dániel12/10/2019
+Hi
+So, the response is for the checkin you send over tcp
+it says, that the device is available
+you cant control the emulator after connecting -- I will investigate this
+for the emulator to send its state, you have to stay connected on tcp
+Sorry about the emulator, I havent got time to work on it, but i will make it more developer friendly, and give much more control over it
+ 
+Dániel12/10/2019
+Hi!
+I made a new version, 
+https://drive.google.com/open?id=1jfIQfmOaQWeKUpGeiqxrQLrMO3QiVJKy
+You can set the ip and port you want the data sent back. you dont need to do any TCP checkin. just listen on an UDP port, set it in the emulator, and control it from simtools
+ 
+g6r6e6g12/10/2019
+Waouhh ! great ! thank you @Dániel.
+ 
+Dániel12/10/2019
+the signs might be opposite to the physical device.. I have to check.
+ 
+g6r6e6g12/10/2019
+Ok I will change on my side when this issue will be fixed.
+ 
+g6r6e6g12/10/2019
+oups I have a problem today, emulator does not react anymore to simtools ... previous version like your new version, investigating ...
+OK it was SimTools which lost my config ... hum very strange
+It works well thank you @Dániel
+ 
+Dániel12/10/2019
+Glad to hear
+the signs of pitch and rool seems to be opposite to a real device. i'll check this next week
+ 
+g6r6e6g12/10/2019
+Yes thank you it s not urgent
+I will now inject orientation compensation into OpenVR driver
+ 
+Dániel12/10/2019
+so when the device pitch backwards, now its sending positive, but it should be negative
+
+good luck
+ 
+g6r6e6g12/10/2019
+yes ok it's same on my side roll (axis2a) is positive on backward. thank you I give you news asap
+
+

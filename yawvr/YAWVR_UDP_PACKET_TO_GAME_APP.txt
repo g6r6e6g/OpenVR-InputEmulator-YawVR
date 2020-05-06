@@ -1,0 +1,49 @@
+EXAMPLE:
+
+SY[0.00]SP[0.00]SR[0.00]GY[0.00]GP[0.00]GR[0.00]S1[0]S2[0]S3[0]U[0.00]X1[Y(   0    0    0    0)P(   0    0    0    0)]X2[R(   0    0    0    0)]Stat[(0 0 0) Calibstate 0000]X3[P(18.0,35.0,35.0) I(0.1,0.1,0.1) D(5.0,10.0,10.0) DO(5) Flags()]
+
+
+MESSAGES APPENDED AFTER EACH OTHER
+
+
+SY[%1.2hf]SP[%1.2hf]SR[%1.2hf]GY[%1.2hf]GP[%1.2hf]GR[%1.2hf]  (SIMULATOR YAW) (SIMULATOR PITCH) (SIMULATOR ROLL) (GAME YAW) (GAME PITCH) (GAME ROLL)
+S1[%0.0hf]S2[%0.0hf]S3[%0.0hf]U[%1.2hf]     (1-2-3 MOTOR SPEED)      (4 BATTERY LEVEL)
+
+
+EXTRA THINGS
+
+X1[Y(%4.0hf %4.0hf %4.0hf %4.0hf)\nP(%4.0hf %4.0hf %4.0hf %4.0hf)]
+						   pidValues.getPIDSum().getYaw(),
+                           pidValues.getProportionalValue().getYaw(),
+                           pidValues.getIntegralValue().getYaw(),
+                           pidValues.getDerivativeValue().getYaw(),
+                           pidValues.getPIDSum().getPitch(),
+                           pidValues.getProportionalValue().getPitch(),
+                           pidValues.getIntegralValue().getPitch(),
+                           pidValues.getDerivativeValue().getPitch()
+			
+X2[R(%4.0hf %4.0hf %4.0hf %4.0hf)]Stat[(%d %d %d) Calibstate %04d]
+						   pidValues.getPIDSum().getRoll(),
+                           pidValues.getProportionalValue().getRoll(),
+                           pidValues.getIntegralValue().getRoll(),
+                           pidValues.getDerivativeValue().getRoll(),
+                           simulation.getOldStatistics().getPacketCounter(),
+                           simulation.getOldStatistics().getDuplicateCounter(),
+                           simulation.getOldStatistics().getMissingCounter(),
+                           1000*(simulation.getCalibState()/64)+
+                           100*((simulation.getCalibState()/16) % 4)+
+                           10*((simulation.getCalibState()/4) % 4)+
+                           (simulation.getCalibState() % 4)
+                           
+						   
+X3[P(%1.1hf,%1.1hf,%1.1hf) I(%1.1hf,%1.1hf,%1.1hf) D(%1.1hf,%1.1hf,%1.1hf) DO(%?i) Flags()]
+		           parameters.getProportionalCoefficient().getYaw(),
+                           parameters.getProportionalCoefficient().getPitch(),
+                           parameters.getProportionalCoefficient().getRoll(),
+                           parameters.getIntegralCoefficient().getYaw(),
+                           parameters.getIntegralCoefficient().getPitch(),
+                           parameters.getIntegralCoefficient().getRoll(),
+                           parameters.getDerivativeCoefficient().getYaw(),
+                           parameters.getDerivativeCoefficient().getPitch(),
+                           parameters.getDerivativeCoefficient().getRoll(),
+                           parameters.getOffset());
