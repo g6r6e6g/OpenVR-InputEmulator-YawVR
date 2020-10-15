@@ -153,6 +153,7 @@
     </Link>
     <PostBuildEvent>
       <Command>echo Copying $(TargetPath) into Program Files (x86)\Steam\steamapps\common\SteamVR\drivers\00vrinputemulator\bin\win32
+mkdir "D:\Program Files (x86)\Steam\steamapps\common\SteamVR\drivers\00vrinputemulator\bin\win32" 2>NUL
 xcopy /Y $(TargetPath) "D:\Program Files (x86)\Steam\steamapps\common\SteamVR\drivers\00vrinputemulator\bin\win32\."</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -175,6 +176,7 @@ xcopy /Y $(TargetPath) "D:\Program Files (x86)\Steam\steamapps\common\SteamVR\dr
     </Link>
     <PostBuildEvent>
       <Command>echo Copying $(TargetPath) into Program Files (x86)\Steam\steamapps\common\SteamVR\drivers\00vrinputemulator\bin\win64
+mkdir "D:\Program Files (x86)\Steam\steamapps\common\SteamVR\drivers\00vrinputemulator\bin\win64" 2>NUL
 xcopy /Y $(TargetPath) "D:\Program Files (x86)\Steam\steamapps\common\SteamVR\drivers\00vrinputemulator\bin\win64\."</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -198,6 +200,7 @@ xcopy /Y $(TargetPath) "D:\Program Files (x86)\Steam\steamapps\common\SteamVR\dr
     </Link>
     <PostBuildEvent>
       <Command>echo Copying $(TargetPath) into Program Files (x86)\Steam\steamapps\common\SteamVR\drivers\00vrinputemulator\bin\win32
+mkdir "D:\Program Files (x86)\Steam\steamapps\common\SteamVR\drivers\00vrinputemulator\bin\win32" 2>NUL
 xcopy /Y $(TargetPath) "D:\Program Files (x86)\Steam\steamapps\common\SteamVR\drivers\00vrinputemulator\bin\win32\."</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -223,6 +226,7 @@ xcopy /Y $(TargetPath) "D:\Program Files (x86)\Steam\steamapps\common\SteamVR\dr
     </Link>
     <PostBuildEvent>
       <Command>echo Copying $(TargetPath) into Program Files (x86)\Steam\steamapps\common\SteamVR\drivers\00vrinputemulator\bin\win64
+mkdir "D:\Program Files (x86)\Steam\steamapps\common\SteamVR\drivers\00vrinputemulator\bin\win64" 2>NUL
 xcopy /Y $(TargetPath) "D:\Program Files (x86)\Steam\steamapps\common\SteamVR\drivers\00vrinputemulator\bin\win64\."</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
